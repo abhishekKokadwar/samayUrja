@@ -1,0 +1,68 @@
+name: Deploy front end
+
+# Builds the front end and uploads it to both Amplify addresses.
+# The backend is not deployed here; that is still done with sam deploy.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # lets the job assume the AWS role without stored keys
+  contents: read
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ap-south-1
+  AMPLIFY_APP_ID: d1ndcinti5dhuo
+  VITE_API_URL: https://g87sjzqis2.execute-api.ap-south-1.amazonaws.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          cd dist && zip -qr ../../site.zip .
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::615930035022:role/samayurja-github-frontend-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to Amplify
+        run: |
+          for BRANCH in samayurja main; do
+            read JOB URL <<< "$(aws amplify create-deployment --app-id "$AMPLIFY_APP_ID" --branch-name "$BRANCH" \
+              --query '[jobId,zipUploadUrl]' --output text)"
+            curl -sf -T site.zip -H 'Content-Type: application/zip' "$URL"
+            aws amplify start-deployment --app-id "$AMPLIFY_APP_ID" --branch-name "$BRANCH" --job-id "$JOB" > /dev/null
+            STATUS=PENDING
+            for i in $(seq 1 30); do
+              STATUS=$(aws amplify get-job --app-id "$AMPLIFY_APP_ID" --branch-name "$BRANCH" --job-id "$JOB" \
+                --query 'job.summary.status' --output text)
+              [ "$STATUS" = SUCCEED ] && break
+              [ "$STATUS" = FAILED ] && break
+              sleep 5
+            done
+            echo "$BRANCH: job $JOB $STATUS"
+            [ "$STATUS" = SUCCEED ]
+          done
