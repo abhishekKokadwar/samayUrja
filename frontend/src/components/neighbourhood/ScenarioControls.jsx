@@ -4,7 +4,7 @@
  * Sliders and inputs for all scenario parameters.
  * Simulation only runs when user clicks "Run Simulation" (not on every slider change).
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Play, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react'
 
 const DEFAULT_SCENARIO = {
@@ -20,40 +20,92 @@ const DEFAULT_SCENARIO = {
   seed: 42,
 }
 
-function SliderRow({ label, name, value, min, max, step, format, onChange }) {
-  const pct = ((value - min) / (max - min)) * 100
+const UNIT_PCT = { type: 'pct', label: '%' }
+const UNIT_KW = { type: 'kw', label: 'kW' }
+const UNIT_NONE = { type: 'none', label: '' }
+
+function SliderRow({ label, name, value, min, max, step, unit = UNIT_NONE, onChange }) {
+  const isPct = unit.type === 'pct';
+  const displayMin = isPct ? Math.round(min * 100) : min;
+  const displayMax = isPct ? Math.round(max * 100) : max;
+  
+  const [inputValue, setInputValue] = useState(() => isPct ? Math.round(value * 100) : value)
+
+  useEffect(() => {
+    setInputValue(isPct ? Math.round(value * 100) : value)
+  }, [value, isPct])
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value)
+    const parsed = parseFloat(e.target.value)
+    if (!isNaN(parsed)) {
+      let raw = isPct ? parsed / 100 : parsed
+      onChange(name, raw)
+    }
+  }
+
+  const handleInputBlur = () => {
+    let parsed = parseFloat(inputValue);
+    if (isNaN(parsed)) {
+      parsed = isPct ? Math.round(value * 100) : value;
+    } else {
+      // Clamp to min/max
+      if (parsed < displayMin) parsed = displayMin;
+      if (parsed > displayMax) parsed = displayMax;
+    }
+    setInputValue(parsed);
+    let raw = isPct ? parsed / 100 : parsed;
+    onChange(name, raw);
+  }
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value)
+    setInputValue(val)
+    let raw = isPct ? val / 100 : val
+    onChange(name, raw)
+  }
+
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
         <label className="text-xs text-[#94A3B8] font-medium" htmlFor={`slider-${name}`}>
           {label}
         </label>
-        <span className="text-xs font-semibold tabular-nums" style={{ color: '#43D9A3' }}>
-          {format ? format(value) : value}
-        </span>
+        <div className="flex items-center justify-end">
+          <input
+            type="number"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            className="text-xs font-semibold tabular-nums text-right bg-transparent border border-transparent hover:border-[rgba(67,217,163,0.3)] focus:border-[#43D9A3] focus:bg-[#151F2A] focus:outline-none rounded px-1 py-0.5 transition-all no-spinners"
+            style={{ color: '#43D9A3', width: '3.5rem', MozAppearance: 'textfield' }}
+          />
+          {unit.label && (
+            <span className="text-xs font-semibold ml-0.5" style={{ color: '#43D9A3' }}>
+              {unit.label}
+            </span>
+          )}
+        </div>
       </div>
       <input
         id={`slider-${name}`}
         type="range"
-        min={min}
-        max={max}
-        step={step || 1}
-        value={value}
-        onChange={e => onChange(name, step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value))}
+        min={displayMin}
+        max={displayMax}
+        step={isPct ? step * 100 : step}
+        value={isPct ? Math.round(value * 100) : value}
+        onChange={handleSliderChange}
         className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
         style={{ accentColor: '#43D9A3' }}
         aria-label={label}
       />
       <div className="flex justify-between text-[0.6rem] text-[#94A3B8]">
-        <span>{format ? format(min) : min}</span>
-        <span>{format ? format(max) : max}</span>
+        <span>{displayMin}{unit.label && ` ${unit.label}`}</span>
+        <span>{displayMax}{unit.label && ` ${unit.label}`}</span>
       </div>
     </div>
   )
 }
-
-const PCT = v => `${Math.round(v * 100)}%`
-const KW = v => `${v} kW`
 
 const TARIFF_OPTIONS = [
   { id: 'tod-domestic-illustrative', label: 'ToD Domestic' },
@@ -76,6 +128,14 @@ export function ScenarioControls({ onRun, loading }) {
       className="rounded-xl overflow-hidden"
       style={{ background: '#101922', border: '1px solid rgba(148,163,184,0.14)' }}
     >
+      <style>{`
+        .no-spinners::-webkit-inner-spin-button,
+        .no-spinners::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+      `}</style>
+      
       {/* Header */}
       <button
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#151F2A] transition-colors"
@@ -100,10 +160,10 @@ export function ScenarioControls({ onRun, loading }) {
                 min={1} max={25} step={1} onChange={set} />
               <SliderRow label="Transformer capacity" name="transformer_capacity_kw"
                 value={params.transformer_capacity_kw} min={50} max={1000} step={50}
-                format={KW} onChange={set} />
+                unit={UNIT_KW} onChange={set} />
               <SliderRow label="Sanctioned load / home" name="sanctioned_load_kw"
                 value={params.sanctioned_load_kw} min={2} max={15} step={0.5}
-                format={KW} onChange={set} />
+                unit={UNIT_KW} onChange={set} />
             </div>
           </section>
 
@@ -114,13 +174,13 @@ export function ScenarioControls({ onRun, loading }) {
             </p>
             <div className="space-y-4">
               <SliderRow label="EV adoption" name="ev_adoption_rate" value={params.ev_adoption_rate}
-                min={0} max={1} step={0.05} format={PCT} onChange={set} />
+                min={0} max={1} step={0.05} unit={UNIT_PCT} onChange={set} />
               <SliderRow label="AC adoption" name="ac_adoption_rate" value={params.ac_adoption_rate}
-                min={0} max={1} step={0.05} format={PCT} onChange={set} />
+                min={0} max={1} step={0.05} unit={UNIT_PCT} onChange={set} />
               <SliderRow label="Geyser adoption" name="geyser_adoption_rate" value={params.geyser_adoption_rate}
-                min={0} max={1} step={0.05} format={PCT} onChange={set} />
+                min={0} max={1} step={0.05} unit={UNIT_PCT} onChange={set} />
               <SliderRow label="Rooftop solar" name="solar_adoption_rate" value={params.solar_adoption_rate}
-                min={0} max={1} step={0.05} format={PCT} onChange={set} />
+                min={0} max={1} step={0.05} unit={UNIT_PCT} onChange={set} />
             </div>
           </section>
 
@@ -189,3 +249,4 @@ export function ScenarioControls({ onRun, loading }) {
     </div>
   )
 }
+

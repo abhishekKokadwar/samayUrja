@@ -38,6 +38,10 @@ class StrategyMetrics:
     max_transformer_utilization_pct: float
     overloaded_transformer_slots: int
     overloaded_transformers: int
+    max_transformer_overload_kw: float
+    total_overload_magnitude_kw_slots: float
+    total_excess_energy_kwh: float
+    transformer_time_overload_intervals: int
 
     # Energy
     total_energy_kwh: float       # sum of all homes, all slots
@@ -54,6 +58,7 @@ class StrategyMetrics:
     # Household-level stats
     n_homes: int = 0
     n_appliances_shifted: int = 0
+    infeasible_appliances: int = 0
 
 
 def compute_metrics(
@@ -64,6 +69,7 @@ def compute_metrics(
     price: list[float],
     carbon: list[float],
     strategy: str,
+    infeasible_appliances: int = 0,
 ) -> StrategyMetrics:
     """Compute all metrics for one strategy from its actual schedule output."""
 
@@ -73,7 +79,23 @@ def compute_metrics(
     par = peak / avg if avg > 0 else 0.0
 
     max_util = max((s.max_utilization_pct for s in transformer_statuses), default=0.0)
-    overloaded_slots = sum(s.overloaded_slots for s in transformer_statuses)
+    
+    unique_overloaded_slots = set()
+    transformer_time_overload_intervals = 0
+    max_transformer_overload_kw = 0.0
+    total_overload_magnitude_kw_slots = 0.0
+
+    for s in transformer_statuses:
+        transformer_time_overload_intervals += s.overloaded_slots
+        for v in s.violations:
+            unique_overloaded_slots.add(v.slot)
+            if v.overload_kw > max_transformer_overload_kw:
+                max_transformer_overload_kw = v.overload_kw
+            total_overload_magnitude_kw_slots += v.overload_kw
+
+    overloaded_slots = len(unique_overloaded_slots)
+    total_excess_energy_kwh = total_overload_magnitude_kw_slots * SLOT_H
+    
     overloaded_transformers = sum(1 for s in transformer_statuses if s.overloaded_slots > 0)
 
     # Total energy: sum of all homes, all slots
@@ -102,10 +124,15 @@ def compute_metrics(
         max_transformer_utilization_pct=round(max_util, 1),
         overloaded_transformer_slots=overloaded_slots,
         overloaded_transformers=overloaded_transformers,
+        max_transformer_overload_kw=round(max_transformer_overload_kw, 2),
+        total_overload_magnitude_kw_slots=round(total_overload_magnitude_kw_slots, 2),
+        total_excess_energy_kwh=round(total_excess_energy_kwh, 2),
+        transformer_time_overload_intervals=transformer_time_overload_intervals,
         total_energy_kwh=round(total_energy, 2),
         total_cost_inr_per_day=round(total_cost, 2),
         total_co2_kg_per_day=round(total_co2, 2),
         n_homes=len(homes),
+        infeasible_appliances=infeasible_appliances,
     )
 
 

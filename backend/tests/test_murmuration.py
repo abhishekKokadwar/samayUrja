@@ -495,6 +495,33 @@ class TestFlockShieldCoordination:
             f"FlockShield PAR ({par_c}) much worse than independent ({par_b})"
         )
 
+    def test_flockshield_fallback_minimizes_peak_overload(self):
+        """When capacity is severely constrained, FlockShield should flatten the overload
+        rather than piling it all into the absolute cheapest slots like independent does."""
+        cfg = ScenarioConfig(
+            n_homes=500,
+            n_transformers=5,
+            transformer_capacity_kw=50.0,  # severe constraint
+            ev_adoption_rate=0.80,
+            ac_adoption_rate=0.40,
+            tariff_id="tod-domestic-illustrative",
+            seed=42,
+        )
+        result = run_simulation(cfg)
+        
+        peak_b = result.independent_metrics.peak_demand_kw
+        peak_c = result.coordinated_metrics.peak_demand_kw
+        
+        max_overload_b = result.independent_metrics.max_transformer_overload_kw
+        max_overload_c = result.coordinated_metrics.max_transformer_overload_kw
+        
+        assert result.coordinated_metrics.infeasible_appliances > 0, "Expected some infeasible appliances at this density"
+        
+        # FlockShield should have significantly lower peak demand and max overload
+        # because its fallback spreads the load across slots to minimize transformer peak
+        assert peak_c < peak_b * 0.7, "FlockShield fallback failed to meaningfully reduce peak demand"
+        assert max_overload_c < max_overload_b * 0.7, "FlockShield fallback failed to meaningfully reduce peak overload"
+
 
 # ---------------------------------------------------------------------------
 # 14. API validation (FastAPI test client)

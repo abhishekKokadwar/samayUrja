@@ -202,11 +202,16 @@ def coordinate(
                     )
                 ]
                 if home_feasible:
-                    # Place at cheapest home-feasible slot, note transformer infeasibility
-                    best = min(home_feasible, key=lambda s: _slot_cost(s, n, price, carbon, app.power_kw)[0])
+                    # Place at slot that minimizes transformer overload, note transformer infeasibility
+                    def _fallback_score(start_s):
+                        peak_load = max(transformer_load[t_idx][(start_s + i) % SLOTS] for i in range(n))
+                        cost, _ = _slot_cost(start_s, n, price, carbon, app.power_kw)
+                        return (peak_load, cost)
+                        
+                    best = min(home_feasible, key=_fallback_score)
                     reason = (
-                        f"No transformer-safe slot available; placed at cheapest "
-                        f"home-feasible slot. Transformer {transformer.id} may be overloaded."
+                        f"No transformer-safe slot available; placed at slot with lowest transformer load "
+                        f"to minimize overload. Transformer {transformer.id} will be overloaded."
                     )
                     constraint = "transformer_capacity"
                     passed = False

@@ -411,7 +411,9 @@ def run_simulation(cfg: ScenarioConfig) -> SimulationResult:
     demand_c, decisions = simulate_coordinated(homes, transformers, price, carbon)
     agg_c = aggregate_neighbourhood_demand(demand_c)
     status_c = check_all_transformers(transformers, demand_c)
-    metrics_c = compute_metrics(agg_c, status_c, demand_c, homes, price, carbon, "coordinated")
+    
+    infeasible_c = sum(1 for d in decisions if not d.passed_validation)
+    metrics_c = compute_metrics(agg_c, status_c, demand_c, homes, price, carbon, "coordinated", infeasible_appliances=infeasible_c)
 
     # Sample decisions for UI (first 100, prefer transformer-constrained ones)
     sorted_decisions = sorted(
