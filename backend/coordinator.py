@@ -448,8 +448,14 @@ def coordinate_balanced(
     home_infeasible_counts: list[int] = [0 for _ in range(n_homes)]
     home_penalties: list[float] = [0.0 for _ in range(n_homes)]
 
+    # Fixed loads first, then the appliance with the fewest possible start times,
+    # then the largest energy. Same rule as the household optimizer.
+    def _order(a: CoordApplianceSpec):
+        starts = len(_candidate_starts(a.earliest_slot, a.latest_end_slot, a.duration_slots))
+        return (a.shiftable, starts, -a.power_kw * a.duration_slots)
+
     for home_idx in range(n_homes):
-        homes_appliances[home_idx] = sorted(homes_appliances[home_idx], key=lambda a: a.power_kw * a.duration_slots, reverse=True)
+        homes_appliances[home_idx] = sorted(homes_appliances[home_idx], key=_order)
 
     max_apps = max((len(apps) for apps in homes_appliances), default=0)
 
@@ -472,7 +478,7 @@ def coordinate_balanced(
                     s = (app.current_start_slot + i) % SLOTS
                     home_load[home_idx][s] += app.power_kw
                     transformer_load[t_idx][s] += app.power_kw
-                home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=app.current_start_slot, reason="fixed", constraint="fixed", passed_validation=True))
+                home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=app.current_start_slot, reason="Fixed load: runs at its usual time and is never shifted.", constraint="fixed", passed_validation=True))
                 continue
 
             candidates = _candidate_starts(app.earliest_slot, app.latest_end_slot, n)
@@ -494,14 +500,14 @@ def coordinate_balanced(
                 home_feasible = [s for s in candidates if all(home_load[home_idx][(s + i) % SLOTS] + app.power_kw <= sanctioned + 1e-6 for i in range(n))]
                 if home_feasible:
                     best = min(home_feasible, key=lambda start_s: (max(transformer_load[t_idx][(start_s + i) % SLOTS] for i in range(n)), _slot_cost(start_s, n, price, carbon, app.power_kw)[0]))
-                    home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=best, reason="transformer overload fallback", constraint="transformer_capacity", passed_validation=False))
+                    home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=best, reason=f"No time in its window fits within transformer {transformer.id}; placed at {_slot_to_time(best)}, where the transformer is least loaded.", constraint="transformer_capacity", passed_validation=False))
                     home_infeasible_counts[home_idx] += 1
                     # They suffered a penalty
                     actual_cost = _slot_cost(best, n, price, carbon, app.power_kw)[0]
                     home_penalties[home_idx] += (actual_cost - optimal_cost)
                 else:
                     best = app.current_start_slot
-                    home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=best, reason="completely infeasible", constraint="infeasible", passed_validation=False))
+                    home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=best, reason="No time in its window fits within the home's sanctioned load; left at its usual time.", constraint="infeasible", passed_validation=False))
                     home_infeasible_counts[home_idx] += 1
                 for i in range(n):
                     s = (best + i) % SLOTS
@@ -520,11 +526,43 @@ def coordinate_balanced(
             actual_cost = _slot_cost(best, n, price, carbon, app.power_kw)[0]
             home_penalties[home_idx] += (actual_cost - optimal_cost)
             
+            # Explain the placement.
+            if actual_cost > optimal_cost + 1e-9:
+                # A cheaper time existed in the window but was not available.
+                cheapest = min(candidates, key=lambda c: _slot_cost(c, n, price, carbon, app.power_kw)[0])
+                extra = actual_cost - optimal_cost
+                home_blocked = any(
+                    home_load[home_idx][(cheapest + i) % SLOTS] + app.power_kw > sanctioned + 1e-6
+                    for i in range(n)
+                )
+                if home_blocked:
+                    reason = (f"Cheapest time ({_slot_to_time(cheapest)}) would exceed the home's sanctioned load; "
+                              f"placed at {_slot_to_time(best)} (Rs {extra:.2f} more per run).")
+                    constraint = "sanctioned_load"
+                else:
+                    reason = (f"Cheapest time ({_slot_to_time(cheapest)}) is full on transformer {transformer.id}; "
+                              f"placed at {_slot_to_time(best)} (Rs {extra:.2f} more per run).")
+                    constraint = "transformer_capacity"
+            elif best == app.current_start_slot:
+                reason = "Already at the cheapest time in its window; not moved."
+                constraint = "tariff"
+            else:
+                same_price = sum(
+                    1 for c in feasible
+                    if abs(_slot_cost(c, n, price, carbon, app.power_kw)[0] - actual_cost) < 1e-9
+                )
+                if same_price > 1:
+                    reason = (f"Moved to {_slot_to_time(best)}: one of {same_price} equally cheap start times, "
+                              f"chosen because transformer {transformer.id} is least loaded then.")
+                else:
+                    reason = f"Moved to {_slot_to_time(best)}, the cheapest time in its window."
+                constraint = "tariff"
+
             for i in range(n):
                 s = (best + i) % SLOTS
                 home_load[home_idx][s] += app.power_kw
                 transformer_load[t_idx][s] += app.power_kw
-            home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=best, reason="placed", constraint="tariff", passed_validation=True))
+            home_decisions[home_idx].append(CoordDecision(home_id=home_idx, appliance_name=app.name, prev_slot=app.current_start_slot, new_slot=best, reason=reason, constraint=constraint, passed_validation=True))
 
     home_results: list[CoordHomeResult] = []
     for home_idx in range(n_homes):

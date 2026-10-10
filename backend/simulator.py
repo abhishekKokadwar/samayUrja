@@ -52,6 +52,10 @@ from transformer import (
     TransformerStatus,
 )
 from metrics import compute_metrics, StrategyMetrics
+from appliance_models import GeyserSpec, geyser_comfort_satisfied
+
+# Rooftop system size for homes flagged as having solar.
+SOLAR_KWP = 2.0
 
 
 # ---------------------------------------------------------------------------
@@ -162,7 +166,9 @@ def _build_appliances(
             days_per_week=7,
             current_start=f"{geyser_start_h:02d}:00",
             earliest_start="04:00",
-            latest_end="09:00",
+            # Hot water must be ready by the time it is ready today. Heating
+            # earlier is fine (the tank holds heat); heating later is not.
+            latest_end=f"{geyser_start_h + 1:02d}:00",
         ))
 
     # AC
@@ -176,6 +182,8 @@ def _build_appliances(
             current_start=f"{ac_start_h:02d}:00",
             earliest_start="12:00",
             latest_end="23:00",
+            # Cooling is a comfort load: people need it when they need it.
+            shiftable=False,
         ))
 
     # EV charger: the largest flexible load
@@ -225,7 +233,12 @@ def build_population(cfg: ScenarioConfig) -> list[SyntheticHome]:
         apps = _build_appliances(i, has_ev, has_ac, has_geyser, home_rng)
         base = _base_load_profile(cfg.seed + i)
 
-        # Solar reduces effective cost but not actual kW drawn (grid import)
+        # Rooftop generation offsets the home's own demand at the meter. A negative
+        # value is export to the grid, credited at the tariff rate (net metering).
+        if has_solar:
+            gen = _solar_generation_profile(SOLAR_KWP)
+            base = [b - g for b, g in zip(base, gen)]
+
         homes.append(SyntheticHome(
             id=i,
             transformer_idx=t_idx,
@@ -351,6 +364,37 @@ def simulate_coordinated(
 
 
 # ---------------------------------------------------------------------------
+# Comfort check: geyser thermal model
+# ---------------------------------------------------------------------------
+
+def count_cold_water_homes(
+    homes: list[SyntheticHome],
+    geyser_start_by_home: dict[int, int],
+) -> int:
+    """
+    Number of homes whose water is below the required temperature at the time
+    they usually finish heating it, according to the geyser thermal model.
+    geyser_start_by_home maps home id to the scheduled start slot (-1 = not run).
+    """
+    cold = 0
+    for home in homes:
+        for app in home.appliances:
+            if app.name != "Geyser":
+                continue
+            n = max(1, app.duration_min // 30)
+            start = geyser_start_by_home.get(home.id, -1)
+            on_slots = [start + i for i in range(n)] if start >= 0 else []
+            spec = GeyserSpec(
+                power_kw=app.power_kw,
+                deadline_slot=_time_to_slot(app.current_start) + n,
+            )
+            satisfied, _ = geyser_comfort_satisfied(spec, on_slots)
+            if not satisfied:
+                cold += 1
+    return cold
+
+
+# ---------------------------------------------------------------------------
 # Full simulation entry point
 # ---------------------------------------------------------------------------
 
@@ -380,6 +424,9 @@ class SimulationResult:
     # Per-transformer summary for UI map
     transformer_summary: list[dict]
 
+    # Counts over every FlockShield decision (the decisions list is only a sample).
+    decision_summary: dict = field(default_factory=dict)
+
     simulation_version: str = "1.0.0"
 
 
@@ -405,12 +452,20 @@ def run_simulation(cfg: ScenarioConfig) -> SimulationResult:
     agg_a = aggregate_neighbourhood_demand(demand_a)
     status_a = check_all_transformers(transformers, demand_a)
     metrics_a = compute_metrics(agg_a, status_a, demand_a, homes, price, carbon, "unmanaged")
+    metrics_a.cold_water_homes = count_cold_water_homes(homes, {
+        h.id: _time_to_slot(app.current_start)
+        for h in homes for app in h.appliances if app.name == "Geyser"
+    })
 
     # Strategy B
-    demand_b, _ = simulate_independent(homes, price, carbon)
+    demand_b, opt_b = simulate_independent(homes, price, carbon)
     agg_b = aggregate_neighbourhood_demand(demand_b)
     status_b = check_all_transformers(transformers, demand_b)
     metrics_b = compute_metrics(agg_b, status_b, demand_b, homes, price, carbon, "independent")
+    metrics_b.cold_water_homes = count_cold_water_homes(homes, {
+        h.id: _time_to_slot(run.new_start)
+        for h, res in zip(homes, opt_b) for run in res.runs if run.name == "Geyser"
+    })
 
     # Strategy C
     demand_c, decisions = simulate_coordinated(homes, transformers, price, carbon, enable_load_shedding=cfg.enable_load_shedding)
@@ -423,6 +478,21 @@ def run_simulation(cfg: ScenarioConfig) -> SimulationResult:
         agg_c, status_c, demand_c, homes, price, carbon, "coordinated", 
         infeasible_appliances=infeasible_c, comfort_violations=shed_c
     )
+    metrics_c.cold_water_homes = count_cold_water_homes(homes, {
+        d.home_id: d.new_slot for d in decisions if d.appliance_name == "Geyser"
+    })
+
+    limited = ("transformer_capacity", "sanctioned_load")
+    decision_summary = {
+        "total": len(decisions),
+        "fixed": sum(1 for d in decisions if d.constraint == "fixed"),
+        "moved": sum(1 for d in decisions
+                     if d.passed_validation and d.constraint != "fixed" and d.new_slot != d.prev_slot),
+        "unchanged": sum(1 for d in decisions
+                         if d.passed_validation and d.constraint != "fixed" and d.new_slot == d.prev_slot),
+        "redirected": sum(1 for d in decisions if d.passed_validation and d.constraint in limited),
+        "unplaced": sum(1 for d in decisions if not d.passed_validation),
+    }
 
     # Sample decisions for UI (first 100, prefer transformer-constrained ones)
     sorted_decisions = sorted(
@@ -489,6 +559,7 @@ def run_simulation(cfg: ScenarioConfig) -> SimulationResult:
         coordinated_metrics=metrics_c,
         decisions=decision_dicts,
         transformer_summary=transformer_summary,
+        decision_summary=decision_summary,
     )
 
 

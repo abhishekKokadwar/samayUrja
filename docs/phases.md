@@ -33,8 +33,8 @@
 - [x] CORS configured for Amplify and localhost
 
 ### Phase 3 — Tests
-- [x] 54 tests covering all required categories
-- [x] All 54 tests pass
+- [x] 56 tests covering all required categories
+- [x] All 56 tests pass
 
 ### Phase 4 — Frontend
 - [x] `App.jsx` — application shell with sidebar navigation
@@ -119,7 +119,7 @@ Write on AWS Builder Center:
 | I | Frontend visualises actual backend results | ✅ API-driven, no fake data |
 | J | Loading, validation, and error states work | ✅ Implemented |
 | K | Household profiles saveable when DynamoDB configured | ✅ Endpoint implemented |
-| L | Automated tests pass | ✅ 54/54 |
+| L | Automated tests pass | ✅ 56/56 |
 | M | SAM template valid and structured for deployment | ✅ |
 | N | Responsive mobile layout | ✅ Tested at 360px |
 | O | All simulated metrics labelled honestly | ✅ SYNTHETIC DATA banner + disclaimers |

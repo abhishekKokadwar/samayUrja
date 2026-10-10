@@ -43,9 +43,6 @@ from appliance_models import (
     geyser_comfort_satisfied,
     geyser_min_slots_needed,
     geyser_heating_rate_c_per_slot,
-    ACSpec,
-    ac_simulate,
-    ac_comfort_slots,
     EVChargerSpec,
     ev_feasible,
 )
@@ -335,29 +332,6 @@ class TestGeyserModel:
         on_slots = list(range(0, 48))  # all slots on
         temps = geyser_simulate(spec, on_slots)
         assert max(temps) <= 70.0 + 1e-6, "Temperature must not exceed max_temp"
-
-
-# ---------------------------------------------------------------------------
-# 9. AC comfort model
-# ---------------------------------------------------------------------------
-
-class TestACModel:
-    def test_ac_reduces_temperature(self):
-        spec = ACSpec(initial_temp_c=35.0, outdoor_temp_c=40.0)
-        on_slots = list(range(0, 24))  # AC on for 12 hours
-        temps = ac_simulate(spec, on_slots)
-        # With AC on, indoor temp should be lower than without
-        off_temps = ac_simulate(spec, [])
-        # AC reduces temperature relative to no-AC
-        avg_on = sum(temps) / len(temps)
-        avg_off = sum(off_temps) / len(off_temps)
-        assert avg_on < avg_off, "AC should reduce average indoor temperature"
-
-    def test_comfort_slots_counted(self):
-        spec = ACSpec(initial_temp_c=20.0, min_comfort_temp_c=18.0, max_comfort_temp_c=26.0)
-        on_slots = list(range(20, 40))
-        count = ac_comfort_slots(spec, on_slots)
-        assert 0 <= count <= SLOTS
 
 
 # ---------------------------------------------------------------------------

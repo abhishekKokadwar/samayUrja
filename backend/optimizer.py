@@ -130,12 +130,15 @@ def optimize(
     """
     load = list(base_load) if base_load else [0.0] * SLOTS
 
-    # Sort by energy (power × duration) descending
-    sorted_apps = sorted(
-        appliances,
-        key=lambda a: a.power_kw * a.duration_min,
-        reverse=True,
-    )
+    # Fixed loads first, then the appliance with the fewest possible start
+    # times, then the largest energy. Placing the most constrained load first
+    # stops a flexible one from taking the only slots a constrained one can use.
+    def _order(a: ApplianceInput):
+        n = max(1, a.duration_min // 30)
+        starts = len(_allowed_starts(_time_to_slot(a.earliest_start), _time_to_slot(a.latest_end), n))
+        return (a.shiftable, starts, -a.power_kw * a.duration_min)
+
+    sorted_apps = sorted(appliances, key=_order)
 
     results: list[ApplianceResult] = []
 

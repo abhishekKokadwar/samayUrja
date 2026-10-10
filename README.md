@@ -4,7 +4,7 @@
 
 > Environmental Hacks — Bharat Builds Tour, Event 02 | Track: Waste and Energy | Team: Hackit247
 
-[![Backend Tests](https://img.shields.io/badge/tests-54%20passed-43D9A3?style=flat)](#tests)
+[![Backend Tests](https://img.shields.io/badge/tests-56%20passed-43D9A3?style=flat)](#tests)
 [![Frontend Build](https://img.shields.io/badge/build-passing-43D9A3?style=flat)](#local-setup)
 [![AWS SAM](https://img.shields.io/badge/AWS-SAM-F4B860?style=flat)](#aws-deployment)
 
@@ -156,7 +156,7 @@ cd backend
 python -m pytest tests/ -v
 ```
 
-**54 tests covering:**
+**56 tests covering:**
 - Tariff expansion into 48-slot price and carbon arrays
 - Correct kWh, INR, and carbon calculations
 - Overnight appliance windows
@@ -271,8 +271,9 @@ All simulation data is **synthetic and illustrative**.
 | Time resolution | 48 half-hour slots per day |
 | Base load model | Simple demand curve (0.2–0.5 kW, varies by hour) |
 | EV charger | 3.3 kW, 4-hour charge, plug-in after 18:00 |
-| Geyser model | First-order thermal model, 25-litre, 2 kW |
-| AC model | Single-zone thermal model, 1.5 kW, COP=3 |
+| Geyser | 25-litre, 2 kW. May heat earlier than usual but never later; a first-order thermal model checks the water is hot at the usual time |
+| AC | 1.5 kW for 3 hours, treated as a comfort load and never shifted |
+| Rooftop solar | 2 kWp bell-curve generation offsets the home's own demand; surplus is exported and credited at the tariff rate |
 | Carbon intensity | Approximated from CEA CO₂ Baseline Database |
 | Tariff | Illustrative ToD tariff modelled on India's rules |
 | Population seed | Deterministic — same seed → identical results |

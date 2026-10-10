@@ -202,6 +202,7 @@ class StrategyMetricsOut(BaseModel):
     n_homes: int
     infeasible_appliances: int
     comfort_violations: int
+    cold_water_homes: int
     losers_vs_unmanaged: int
     losers_vs_unmanaged_pct: float
     max_cost_increase_vs_unmanaged_inr: float
@@ -239,6 +240,7 @@ class SimulateResponse(BaseModel):
     independent_metrics: StrategyMetricsOut
     coordinated_metrics: StrategyMetricsOut
     decisions: list[DecisionOut]
+    decision_summary: dict
     transformer_summary: list[TransformerSummaryOut]
     simulation_version: str
     computed_at: str
@@ -394,6 +396,7 @@ def post_simulate(body: SimulateIn):
             n_homes=m.n_homes,
             infeasible_appliances=m.infeasible_appliances,
             comfort_violations=m.comfort_violations,
+            cold_water_homes=m.cold_water_homes,
             losers_vs_unmanaged=m.losers_vs_unmanaged,
             losers_vs_unmanaged_pct=m.losers_vs_unmanaged_pct,
             max_cost_increase_vs_unmanaged_inr=m.max_cost_increase_vs_unmanaged_inr,
@@ -412,6 +415,7 @@ def post_simulate(body: SimulateIn):
         independent_metrics=_metrics_out(sim.independent_metrics),
         coordinated_metrics=_metrics_out(sim.coordinated_metrics),
         decisions=[DecisionOut(**d) for d in sim.decisions],
+        decision_summary=sim.decision_summary,
         transformer_summary=[TransformerSummaryOut(**t) for t in sim.transformer_summary],
         simulation_version=sim.simulation_version,
         computed_at=datetime.now(timezone.utc).isoformat(),

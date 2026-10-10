@@ -60,6 +60,7 @@ class StrategyMetrics:
     n_appliances_shifted: int = 0
     infeasible_appliances: int = 0
     comfort_violations: int = 0
+    cold_water_homes: int = 0     # geyser thermal model: water not hot by the usual time
 
     per_home_costs_inr: list[float] = field(default_factory=list)
     losers_vs_unmanaged: int = 0
