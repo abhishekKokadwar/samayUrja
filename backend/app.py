@@ -194,6 +194,8 @@ class StrategyMetricsOut(BaseModel):
     co2_avoided_vs_unmanaged_kg: float
     peak_reduction_kw: float
     n_homes: int
+    infeasible_appliances: int
+    comfort_violations: int
 
 
 class DecisionOut(BaseModel):
@@ -375,6 +377,8 @@ def post_simulate(body: SimulateIn):
             co2_avoided_vs_unmanaged_kg=m.co2_avoided_vs_unmanaged_kg,
             peak_reduction_kw=m.peak_reduction_kw,
             n_homes=m.n_homes,
+            infeasible_appliances=m.infeasible_appliances,
+            comfort_violations=m.comfort_violations,
         )
 
     return SimulateResponse(
