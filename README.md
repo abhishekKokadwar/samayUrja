@@ -4,7 +4,7 @@
 
 > Environmental Hacks — Bharat Builds Tour, Event 02 | Track: Waste and Energy | Team: Hackit247
 
-[![Backend Tests](https://img.shields.io/badge/tests-45%20passed-43D9A3?style=flat)](#tests)
+[![Backend Tests](https://img.shields.io/badge/tests-52%20passed-43D9A3?style=flat)](#tests)
 [![Frontend Build](https://img.shields.io/badge/build-passing-43D9A3?style=flat)](#local-setup)
 [![AWS SAM](https://img.shields.io/badge/AWS-SAM-F4B860?style=flat)](#aws-deployment)
 
@@ -77,7 +77,7 @@ flowchart TB
     subgraph AWS
         A[Amplify Hosting<br/>Static Frontend]
         G[API Gateway<br/>HTTP API]
-        L[Lambda<br/>Python 3.12<br/>FastAPI + Mangum]
+        L[Lambda<br/>Python 3.11<br/>FastAPI + Mangum]
         D[(DynamoDB<br/>households)]
 
         subgraph Backend Modules
@@ -106,7 +106,7 @@ flowchart TB
 | Layer | Technology |
 |---|---|
 | Frontend | React 18, Vite, Tailwind CSS, Recharts, lucide-react |
-| Backend | Python 3.12, FastAPI, Pydantic v2, Mangum |
+| Backend | Python 3.11, FastAPI, Pydantic v2, Mangum |
 | Compute | AWS Lambda (512 MB, 60s timeout) |
 | API | AWS API Gateway HTTP API |
 | Database | AWS DynamoDB (on-demand billing) |
@@ -118,7 +118,7 @@ flowchart TB
 ## Local Setup
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.11+
 - Node.js 18+
 - pip
 
@@ -156,7 +156,7 @@ cd backend
 python -m pytest tests/ -v
 ```
 
-**45 tests covering:**
+**52 tests covering:**
 - Tariff expansion into 48-slot price and carbon arrays
 - Correct kWh, INR, and carbon calculations
 - Overnight appliance windows

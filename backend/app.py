@@ -14,10 +14,12 @@ Run locally with: uvicorn app:app --reload --port 8000
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import time
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Annotated, Any, Optional
 
 import boto3
@@ -316,7 +318,8 @@ def put_household(
         table = _get_table()
         table.put_item(Item={
             "id": household_id,
-            "profile": profile.model_dump(),
+            # DynamoDB rejects Python floats, so numbers are stored as Decimal.
+            "profile": json.loads(profile.model_dump_json(), parse_float=Decimal),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         })
     except (ClientError, BotoCoreError) as e:

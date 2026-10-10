@@ -27,7 +27,7 @@ flowchart LR
 | Web app | React, Vite, Tailwind, Recharts, lucide-react | Neighbourhood dashboard, household optimizer, API integration |
 | Hosting | AWS Amplify Hosting | Build from Git repo, serve over HTTPS |
 | API | API Gateway HTTP API | Routing, CORS, throttling |
-| Service | Lambda, Python 3.12, FastAPI + Mangum | Validation, FlockShield engine, persistence |
+| Service | Lambda, Python 3.11, FastAPI + Mangum | Validation, FlockShield engine, persistence |
 | Household optimizer | `optimizer.py` | Greedy tariff-aware scheduler (Strategy B baseline) |
 | FlockShield | `coordinator.py` | Capacity-aware coordination across all homes (Strategy C) |
 | Simulator | `simulator.py` | Synthetic population generation, three-strategy simulation |
@@ -177,7 +177,7 @@ samayUrja/
 │   ├── tariffs.json            Bundled illustrative tariff presets
 │   ├── requirements.txt
 │   └── tests/
-│       └── test_murmuration.py  45 tests covering all major invariants
+│       └── test_murmuration.py  46 of the 52 tests; four smaller files cover fairness, overload metrics and strict capacity
 └── frontend/
     ├── package.json
     ├── vite.config.js

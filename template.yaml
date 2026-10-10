@@ -7,7 +7,7 @@ Description: |
 
 Globals:
   Function:
-    Runtime: python3.12
+    Runtime: python3.11
     Architectures: [x86_64]
     Environment:
       Variables:
@@ -32,15 +32,9 @@ Resources:
   MurmurationApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: !Ref Environment
-      CorsConfiguration:
-        AllowOrigins:
-          - !Sub "https://${AmplifyApp}.amplifyapp.com"
-          - "http://localhost:5173"
-          - "http://localhost:3000"
-        AllowMethods: [GET, POST, PUT, OPTIONS]
-        AllowHeaders: [Content-Type, Authorization]
-        MaxAge: 300
+      StageName: $default
+      # CORS is answered by FastAPI (backend/app.py), which already allows any
+      # *.amplifyapp.com origin. Configuring it here as well would override that.
 
   MurmurationFunction:
     Type: AWS::Serverless::Function
@@ -93,7 +87,7 @@ Resources:
 Outputs:
   HttpApiUrl:
     Description: "API Gateway HTTP API endpoint URL"
-    Value: !Sub "https://${MurmurationApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Value: !Sub "https://${MurmurationApi}.execute-api.${AWS::Region}.amazonaws.com"
     Export:
       Name: !Sub "${AWS::StackName}-ApiUrl"
 
