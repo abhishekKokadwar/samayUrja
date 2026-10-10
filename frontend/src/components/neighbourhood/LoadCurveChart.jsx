@@ -75,7 +75,7 @@ const CustomLegend = ({ payload }) => {
   if (!payload?.length) return null
   const labels = {
     unmanaged: 'Unmanaged',
-    independent: 'Independent (rebound)',
+    independent: 'Independent',
     coordinated: 'FlockShield',
   }
   return (
@@ -116,7 +116,8 @@ export function LoadCurveChart({
     ...(independentDemand || []),
     ...(coordinatedDemand || []),
   ].filter(Boolean)
-  const maxVal = allValues.length ? Math.max(...allValues) : 100
+  // Include the capacity line so it is always inside the visible range.
+  const maxVal = Math.max(allValues.length ? Math.max(...allValues) : 100, transformerCapacityKw || 0)
 
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -152,7 +153,7 @@ export function LoadCurveChart({
             stroke="#F16C75"
             strokeDasharray="4 2"
             strokeWidth={1.5}
-            label={{ value: 'Transformer cap.', position: 'right', fill: '#F16C75', fontSize: 9 }}
+            label={{ value: 'Combined transformer capacity', position: 'insideTopRight', fill: '#F16C75', fontSize: 9 }}
           />
         )}
 

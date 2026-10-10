@@ -177,7 +177,7 @@ samayUrja/
 │   ├── tariffs.json            Bundled illustrative tariff presets
 │   ├── requirements.txt
 │   └── tests/
-│       └── test_murmuration.py  46 of the 52 tests; four smaller files cover fairness, overload metrics and strict capacity
+│       └── test_murmuration.py  46 of the 54 tests; five smaller files cover fairness, overload metrics and strict capacity
 └── frontend/
     ├── package.json
     ├── vite.config.js

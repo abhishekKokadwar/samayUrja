@@ -4,7 +4,7 @@
 
 > Environmental Hacks — Bharat Builds Tour, Event 02 | Track: Waste and Energy | Team: Hackit247
 
-[![Backend Tests](https://img.shields.io/badge/tests-52%20passed-43D9A3?style=flat)](#tests)
+[![Backend Tests](https://img.shields.io/badge/tests-54%20passed-43D9A3?style=flat)](#tests)
 [![Frontend Build](https://img.shields.io/badge/build-passing-43D9A3?style=flat)](#local-setup)
 [![AWS SAM](https://img.shields.io/badge/AWS-SAM-F4B860?style=flat)](#aws-deployment)
 
@@ -20,7 +20,7 @@ When thousands of homes each run their own appliance scheduler, they all shift E
 
 ```
 Unmanaged:   ░░░░▓▓▓▓▓▓▓▓▓░░   (evening peak from natural behaviour)
-Independent: ░░░░░▓▓▓▓▓▓▓▓░░░  (rebound peak in solar band from synchronized shifts)
+Independent: ░░░░░▓▓▓▓▓▓▓▓░░░  (rebound peak in the cheapest band from synchronized shifts)
 FlockShield: ░░░░░░▓▓▓░░▓░░░░  (coordinated spread across available capacity)
 ```
 
@@ -156,7 +156,7 @@ cd backend
 python -m pytest tests/ -v
 ```
 
-**52 tests covering:**
+**54 tests covering:**
 - Tariff expansion into 48-slot price and carbon arrays
 - Correct kWh, INR, and carbon calculations
 - Overnight appliance windows

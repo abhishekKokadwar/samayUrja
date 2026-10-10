@@ -60,14 +60,14 @@ from metrics import compute_metrics, StrategyMetrics
 
 @dataclass
 class ScenarioConfig:
-    n_homes: int = 100
+    n_homes: int = 500
     n_transformers: int = 5
     transformer_capacity_kw: float = 200.0   # per transformer
     ev_adoption_rate: float = 0.30
     ac_adoption_rate: float = 0.40
     geyser_adoption_rate: float = 0.70
     solar_adoption_rate: float = 0.10
-    tariff_id: str = "tod-domestic-illustrative"
+    tariff_id: str = "tod-ev-illustrative"
     sanctioned_load_kw: float = 5.0          # per home
     enable_load_shedding: bool = False
     seed: int = 42
@@ -178,9 +178,10 @@ def _build_appliances(
             latest_end="23:00",
         ))
 
-    # EV charger — this is the key load that causes the rebound peak
+    # EV charger: the largest flexible load
     if has_ev:
-        # Most EV owners plug in after returning home (evening peak)
+        # The car is away during the day. It can only charge from the time it is
+        # plugged in after returning home until it is needed the next morning.
         ev_start_h = rng.choice([18, 19, 20, 21])
         apps.append(ApplianceInput(
             name="EV charger",
@@ -188,8 +189,8 @@ def _build_appliances(
             duration_min=240,
             days_per_week=rng.randint(5, 7),
             current_start=f"{ev_start_h:02d}:00",
-            earliest_start="09:00",
-            latest_end="07:00",  # can charge overnight, wrap
+            earliest_start=f"{ev_start_h:02d}:00",
+            latest_end="07:00",  # overnight window, wraps past midnight
         ))
 
     # Water pump
@@ -287,6 +288,7 @@ def simulate_independent(
             price=price,
             carbon=carbon,
             sanctioned_load_kw=home.sanctioned_load_kw,
+            base_load=home.base_load_slots,
         )
         demand = list(home.base_load_slots)
         for run in result.runs:

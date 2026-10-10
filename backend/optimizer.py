@@ -119,13 +119,16 @@ def optimize(
     price: list[float],
     carbon: list[float],
     sanctioned_load_kw: float,
+    base_load: Optional[list[float]] = None,
 ) -> OptimizeResult:
     """
     Greedy optimizer: schedule each appliance to minimise cost.
     load[] tracks cumulative demand; never exceeds sanctioned_load_kw.
     Appliances are processed largest-energy-first.
+    base_load is the home's fixed demand per slot. It counts toward the
+    sanctioned load, the same way the neighbourhood coordinator counts it.
     """
-    load = [0.0] * SLOTS
+    load = list(base_load) if base_load else [0.0] * SLOTS
 
     # Sort by energy (power × duration) descending
     sorted_apps = sorted(

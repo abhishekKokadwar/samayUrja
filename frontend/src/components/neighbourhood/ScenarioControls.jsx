@@ -8,14 +8,14 @@ import { useState, useEffect } from 'react'
 import { Play, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react'
 
 const DEFAULT_SCENARIO = {
-  n_homes: 100,
+  n_homes: 500,
   n_transformers: 5,
   transformer_capacity_kw: 200,
   ev_adoption_rate: 0.30,
   ac_adoption_rate: 0.40,
   geyser_adoption_rate: 0.70,
   solar_adoption_rate: 0.10,
-  tariff_id: 'tod-domestic-illustrative',
+  tariff_id: 'tod-ev-illustrative',
   sanctioned_load_kw: 5,
   seed: 42,
 }

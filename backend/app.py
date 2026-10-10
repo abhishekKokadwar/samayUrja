@@ -157,14 +157,14 @@ class OptimizeResponse(BaseModel):
 # --- Simulate endpoint models ---
 
 class SimulateIn(BaseModel):
-    n_homes: int = Field(default=100, ge=10, le=2000)
+    n_homes: int = Field(default=500, ge=10, le=2000)
     n_transformers: int = Field(default=5, ge=1, le=100)
     transformer_capacity_kw: float = Field(default=200.0, ge=10.0, le=5000.0)
     ev_adoption_rate: float = Field(default=0.30, ge=0.0, le=1.0)
     ac_adoption_rate: float = Field(default=0.40, ge=0.0, le=1.0)
     geyser_adoption_rate: float = Field(default=0.70, ge=0.0, le=1.0)
     solar_adoption_rate: float = Field(default=0.10, ge=0.0, le=1.0)
-    tariff_id: str = Field(default="tod-domestic-illustrative")
+    tariff_id: str = Field(default="tod-ev-illustrative")
     sanctioned_load_kw: float = Field(default=5.0, ge=1.0, le=50.0)
     seed: int = Field(default=42, ge=0, le=999999)
 

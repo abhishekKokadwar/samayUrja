@@ -54,14 +54,14 @@ export default function NeighbourhoodPage() {
   // Auto-run on mount
   useEffect(() => {
     runSimulation({
-      n_homes: 100,
+      n_homes: 500,
       n_transformers: 5,
       transformer_capacity_kw: 200,
       ev_adoption_rate: 0.30,
       ac_adoption_rate: 0.40,
       geyser_adoption_rate: 0.70,
       solar_adoption_rate: 0.10,
-      tariff_id: 'tod-domestic-illustrative',
+      tariff_id: 'tod-ev-illustrative',
       sanctioned_load_kw: 5,
       seed: 42,
     })
@@ -162,9 +162,9 @@ export default function NeighbourhoodPage() {
           </div>
           <button
             onClick={() => runSimulation({
-              n_homes: 100, n_transformers: 5, transformer_capacity_kw: 200,
+              n_homes: 500, n_transformers: 5, transformer_capacity_kw: 200,
               ev_adoption_rate: 0.30, ac_adoption_rate: 0.40, geyser_adoption_rate: 0.70,
-              solar_adoption_rate: 0.10, tariff_id: 'tod-domestic-illustrative',
+              solar_adoption_rate: 0.10, tariff_id: 'tod-ev-illustrative',
               sanctioned_load_kw: 5, seed: 42,
             })}
             className="btn-icon flex-shrink-0"
@@ -393,7 +393,7 @@ export default function NeighbourhoodPage() {
             transformerCapacityKw={
               simResult
                 ? simResult.scenario.n_transformers > 0
-                  ? simResult.scenario.transformer_capacity_kw
+                  ? simResult.scenario.n_transformers * simResult.scenario.transformer_capacity_kw
                   : undefined
                 : undefined
             }
@@ -408,9 +408,20 @@ export default function NeighbourhoodPage() {
             >
               <AlertTriangle size={11} color="#F4B860" className="flex-shrink-0 mt-0.5" />
               <span className="text-[#94A3B8]">
-                <span className="font-semibold text-[#F4B860]">Rebound peak:</span> Independent optimization
-                peaks at {FMT(indepMetrics.peak_demand_kw)} kW because homes simultaneously shift to cheapest slots.
-                FlockShield reduces PAR from {FMT(indepMetrics.peak_to_avg_ratio, 2)} to {FMT(coordMetrics?.peak_to_avg_ratio, 2)}.
+                {indepMetrics.peak_demand_kw > (unmanagedMetrics?.peak_demand_kw ?? Infinity) ? (
+                  <>
+                    <span className="font-semibold text-[#F4B860]">Rebound peak:</span> Independent optimization
+                    peaks at {FMT(indepMetrics.peak_demand_kw)} kW, above the unmanaged {FMT(unmanagedMetrics.peak_demand_kw)} kW,
+                    because homes shift to the same cheap slots.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-[#F4B860]">No rebound in this scenario:</span> Independent optimization
+                    peaks at {FMT(indepMetrics.peak_demand_kw)} kW, below the unmanaged {FMT(unmanagedMetrics?.peak_demand_kw)} kW,
+                    but still bunches load into the cheapest slots.
+                  </>
+                )}{' '}
+                FlockShield peaks at {FMT(coordMetrics?.peak_demand_kw)} kW.
               </span>
             </div>
           )}
