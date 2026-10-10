@@ -185,15 +185,21 @@ export default function NeighbourhoodPage() {
           icon={Zap}
           color={
             metrics
-              ? metrics.max_transformer_utilization_pct > 90
+              ? metrics.max_transformer_utilization_pct > 120
                 ? '#F16C75'
-                : metrics.max_transformer_utilization_pct > 70
+                : metrics.max_transformer_utilization_pct > 90
                   ? '#F4B860'
                   : '#43D9A3'
               : '#94A3B8'
           }
           loading={loading && !simResult}
-          comparison={metrics ? `${metrics.overloaded_transformer_slots} overloaded slots` : null}
+          comparison={
+            metrics
+              ? metrics.max_transformer_utilization_pct > 120
+                ? '⚠️ Severe Thermal Risk'
+                : `${metrics.overloaded_transformer_slots} overloaded slots`
+              : null
+          }
         />
         <KPICard
           label="Est. Daily Savings"
@@ -220,17 +226,29 @@ export default function NeighbourhoodPage() {
           loading={loading && !simResult}
           comparison="Based on illustrative carbon intensity model"
         />
-        <KPICard
-          label="Overloaded Slots"
-          value={metrics ? metrics.overloaded_transformer_slots : '—'}
-          unit="/ 48"
-          icon={AlertTriangle}
-          color={
-            metrics?.overloaded_transformer_slots > 0 ? '#F16C75' : '#43D9A3'
-          }
-          loading={loading && !simResult}
-          comparison={metrics?.overloaded_transformer_slots === 0 ? 'No transformer violations' : undefined}
-        />
+        {simResult?.scenario?.enable_load_shedding ? (
+          <KPICard
+            label="Comfort Violations"
+            value={metrics ? metrics.comfort_violations : '—'}
+            unit="sheds"
+            icon={AlertTriangle}
+            color={metrics?.comfort_violations > 0 ? '#F4B860' : '#43D9A3'}
+            loading={loading && !simResult}
+            comparison="Appliances rejected to protect grid"
+          />
+        ) : (
+          <KPICard
+            label="Overloaded Slots"
+            value={metrics ? metrics.overloaded_transformer_slots : '—'}
+            unit="/ 48"
+            icon={AlertTriangle}
+            color={
+              metrics?.overloaded_transformer_slots > 0 ? '#F16C75' : '#43D9A3'
+            }
+            loading={loading && !simResult}
+            comparison={metrics?.overloaded_transformer_slots === 0 ? 'No transformer violations' : undefined}
+          />
+        )}
       </div>
 
       {/* ── Main grid: Chart + Controls ──────────────────────────── */}

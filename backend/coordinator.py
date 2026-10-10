@@ -108,6 +108,7 @@ def coordinate(
     transformers: list[Transformer],
     price: list[float],
     carbon: list[float],
+    enable_load_shedding: bool = False,
 ) -> tuple[list[CoordHomeResult], list[CoordDecision]]:
     """
     Coordinate all homes' flexible appliances under transformer capacity.
@@ -193,6 +194,25 @@ def coordinate(
                     feasible.append(s)
 
             if not feasible:
+                if enable_load_shedding:
+                    # Load Shedding: reject the appliance completely
+                    best = -1
+                    reason = "Load Shed: Appliance rejected to prevent severe transformer overload."
+                    constraint = "infeasible"
+                    passed = False
+                    infeasible_count += 1
+                    
+                    decisions.append(CoordDecision(
+                        home_id=home_idx,
+                        appliance_name=app.name,
+                        prev_slot=app.current_start_slot,
+                        new_slot=best,
+                        reason=reason,
+                        constraint=constraint,
+                        passed_validation=passed,
+                    ))
+                    continue
+
                 # Try without transformer constraint (at least satisfy household)
                 home_feasible = [
                     s for s in candidates

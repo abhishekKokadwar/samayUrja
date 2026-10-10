@@ -59,6 +59,7 @@ class StrategyMetrics:
     n_homes: int = 0
     n_appliances_shifted: int = 0
     infeasible_appliances: int = 0
+    comfort_violations: int = 0
 
 
 def compute_metrics(
@@ -70,6 +71,7 @@ def compute_metrics(
     carbon: list[float],
     strategy: str,
     infeasible_appliances: int = 0,
+    comfort_violations: int = 0,
 ) -> StrategyMetrics:
     """Compute all metrics for one strategy from its actual schedule output."""
 
@@ -133,6 +135,7 @@ def compute_metrics(
         total_co2_kg_per_day=round(total_co2, 2),
         n_homes=len(homes),
         infeasible_appliances=infeasible_appliances,
+        comfort_violations=comfort_violations,
     )
 
 

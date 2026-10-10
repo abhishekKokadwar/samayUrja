@@ -208,6 +208,26 @@ export function ScenarioControls({ onRun, loading }) {
             </div>
           </section>
 
+          {/* Constraints */}
+          <section>
+            <p className="text-[0.65rem] text-[#94A3B8] uppercase tracking-wider font-semibold mb-2">
+              Constraints
+            </p>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={params.enable_load_shedding || false}
+                  onChange={(e) => set('enable_load_shedding', e.target.checked)}
+                  className="accent-[#43D9A3]"
+                />
+                <span className={`text-xs ${params.enable_load_shedding ? 'text-[#43D9A3] font-medium' : 'text-[#94A3B8]'}`}>
+                  Strict Capacity Limits (Load Shedding)
+                </span>
+              </label>
+            </div>
+          </section>
+
           {/* Seed */}
           <div>
             <label className="form-label" htmlFor="seed-input">Random seed (reproducibility)</label>

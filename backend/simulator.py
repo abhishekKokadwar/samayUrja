@@ -69,6 +69,7 @@ class ScenarioConfig:
     solar_adoption_rate: float = 0.10
     tariff_id: str = "tod-domestic-illustrative"
     sanctioned_load_kw: float = 5.0          # per home
+    enable_load_shedding: bool = False
     seed: int = 42
 
 
@@ -306,6 +307,7 @@ def simulate_coordinated(
     transformers: list[Transformer],
     price: list[float],
     carbon: list[float],
+    enable_load_shedding: bool = False,
 ) -> tuple[list[list[float]], list[CoordDecision]]:
     """
     Strategy C: FlockShield coordination.
@@ -339,6 +341,7 @@ def simulate_coordinated(
         transformers=transformers,
         price=price,
         carbon=carbon,
+        enable_load_shedding=enable_load_shedding,
     )
 
     demand_by_home = [hr.demand_slots for hr in home_results]
@@ -408,12 +411,16 @@ def run_simulation(cfg: ScenarioConfig) -> SimulationResult:
     metrics_b = compute_metrics(agg_b, status_b, demand_b, homes, price, carbon, "independent")
 
     # Strategy C
-    demand_c, decisions = simulate_coordinated(homes, transformers, price, carbon)
+    demand_c, decisions = simulate_coordinated(homes, transformers, price, carbon, enable_load_shedding=cfg.enable_load_shedding)
     agg_c = aggregate_neighbourhood_demand(demand_c)
     status_c = check_all_transformers(transformers, demand_c)
     
-    infeasible_c = sum(1 for d in decisions if not d.passed_validation)
-    metrics_c = compute_metrics(agg_c, status_c, demand_c, homes, price, carbon, "coordinated", infeasible_appliances=infeasible_c)
+    infeasible_c = sum(1 for d in decisions if not d.passed_validation and "Load Shed" not in d.reason)
+    shed_c = sum(1 for d in decisions if "Load Shed" in d.reason)
+    metrics_c = compute_metrics(
+        agg_c, status_c, demand_c, homes, price, carbon, "coordinated", 
+        infeasible_appliances=infeasible_c, comfort_violations=shed_c
+    )
 
     # Sample decisions for UI (first 100, prefer transformer-constrained ones)
     sorted_decisions = sorted(
