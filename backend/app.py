@@ -21,10 +21,13 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Optional
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Path
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
+
+load_dotenv()
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from tariffs import list_tariffs, get_tariff, SLOTS
@@ -68,7 +71,8 @@ _dynamodb = None
 def _get_table():
     global _dynamodb
     if _dynamodb is None:
-        _dynamodb = boto3.resource("dynamodb").Table(_TABLE_NAME)
+        region = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "ap-south-1"))
+        _dynamodb = boto3.resource("dynamodb", region_name=region).Table(_TABLE_NAME)
     return _dynamodb
 
 
@@ -315,8 +319,9 @@ def put_household(
             "profile": profile.model_dump(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         })
-    except ClientError as e:
-        raise HTTPException(status_code=503, detail=f"Database error: {e.response['Error']['Code']}")
+    except (ClientError, BotoCoreError) as e:
+        msg = e.response["Error"]["Code"] if isinstance(e, ClientError) else str(e)
+        raise HTTPException(status_code=503, detail=f"Database error: {msg}")
     return {"id": household_id, "saved": True}
 
 
@@ -330,8 +335,9 @@ def get_household(
     try:
         table = _get_table()
         resp = table.get_item(Key={"id": household_id})
-    except ClientError as e:
-        raise HTTPException(status_code=503, detail=f"Database error: {e.response['Error']['Code']}")
+    except (ClientError, BotoCoreError) as e:
+        msg = e.response["Error"]["Code"] if isinstance(e, ClientError) else str(e)
+        raise HTTPException(status_code=503, detail=f"Database error: {msg}")
     item = resp.get("Item")
     if not item:
         raise HTTPException(status_code=404, detail="Household not found.")
