@@ -238,15 +238,34 @@ export default function NeighbourhoodPage() {
           comparison={metrics?.overloaded_transformer_slots === 0 ? 'No transformer violations' : undefined}
         />
         {simResult?.scenario?.enable_load_shedding && (
-          <KPICard
-            label="Comfort Violations"
-            value={metrics ? metrics.comfort_violations : '—'}
-            unit="sheds"
-            icon={AlertTriangle}
-            color={metrics?.comfort_violations > 0 ? '#F4B860' : '#43D9A3'}
-            loading={loading && !simResult}
-            comparison="Appliances rejected to protect grid"
-          />
+          <>
+            <KPICard
+              label="Comfort Violations"
+              value={metrics ? metrics.comfort_violations : '—'}
+              unit="sheds"
+              icon={AlertTriangle}
+              color={metrics?.comfort_violations > 0 ? '#F4B860' : '#43D9A3'}
+              loading={loading && !simResult}
+              comparison="Appliances rejected to protect grid"
+            />
+            <KPICard
+              label="Unmet Energy"
+              value={
+                metrics?.total_energy_kwh != null && simResult.unmanaged_metrics.total_energy_kwh != null
+                  ? FMT(simResult.unmanaged_metrics.total_energy_kwh - metrics.total_energy_kwh, 1)
+                  : '—'
+              }
+              unit="kWh"
+              icon={TrendingDown}
+              color={
+                metrics && (simResult.unmanaged_metrics.total_energy_kwh - metrics.total_energy_kwh) > 0
+                  ? '#F16C75'
+                  : '#43D9A3'
+              }
+              loading={loading && !simResult}
+              comparison="Energy demand dropped due to sheds"
+            />
+          </>
         )}
       </div>
 
