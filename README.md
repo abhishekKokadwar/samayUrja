@@ -14,7 +14,7 @@
 
 India's Electricity (Rights of Consumers) Amendment Rules, 2023 bring Time-of-Day (ToD) tariffs to domestic consumers as smart meters roll out. Midday is cheap and clean (solar generation). Evening is expensive and dirty (coal-heavy peak demand).
 
-**Individual optimization makes this worse.**
+**Individual optimization can make this worse.**
 
 When thousands of homes each run their own appliance scheduler, they all shift EV charging and geysers to the same cheap periods simultaneously. This creates a new demand spike — a **rebound peak** — that can overload local distribution transformers and defeat the purpose of the price signal.
 
@@ -275,9 +275,25 @@ All simulation data is **synthetic and illustrative**.
 | Geyser | 25-litre, 2 kW. May heat earlier than usual but never later; a first-order thermal model checks the water is hot at the usual time |
 | AC | 1.5 kW for 3 hours, treated as a comfort load and never shifted |
 | Rooftop solar | 2 kWp bell-curve generation offsets the home's own demand; surplus is exported and credited at the tariff rate |
-| Carbon intensity | Approximated from CEA CO₂ Baseline Database |
-| Tariff | Illustrative ToD tariff modelled on India's rules |
+| Carbon intensity | 0.70 kg CO₂/kWh in normal hours, close to the CEA grid average of 0.727 (FY 2023-24). Lower in solar hours and higher in the evening peak; that hourly split is our assumption, not CEA data |
+| Tariff | Illustrative. The multipliers respect the floors in India's ToD rule (see Sources); the base rate of Rs 8/kWh and the exact hours are our assumptions |
 | Population seed | Deterministic — same seed → identical results |
+
+---
+
+## Sources
+
+What the project's claims rest on, and how far each source goes.
+
+| Claim | Source | What it supports |
+|---|---|---|
+| India is moving households to Time-of-Day tariffs | Electricity (Rights of Consumers) Amendment Rules, 2023, rule 8A, notified 14 June 2023. Rule text as reproduced by [LegitQuest](https://www.legitquest.com/act/electricity-rights-of-consumers-amendment-rules-2023/D53E) | Peak tariff not less than 1.20 times normal for commercial and industrial consumers and 1.10 times for others; solar-hours tariff at least 20% less than normal; solar hours are eight hours a day set by the State Commission; applies to consumers other than agricultural not later than 1 April 2025, and immediately after a smart meter is installed |
+| Our tariff presets | Same rule | Our presets use 1.20 and 1.30 at peak and 25% to 30% off in solar hours, which satisfy the floors above. They are not any DISCOM's published tariff. The after-midnight discount in the EV preset is our assumption; the rule does not define one |
+| Grid carbon intensity | CEA CO2 Baseline Database for the Indian Power Sector, Version 20.0 (December 2024), as reported by [SolarQuarter](https://solarquarter.com/2025/01/06/co2-baseline-database-highlights-indias-progress-in-renewable-energy-and-emission-reduction-cea/) and [Climatiq](https://www.climatiq.io/data/source/government-of-india-_-central-electricity-authority) | Weighted average emission factor of 0.727 tCO2/MWh for FY 2023-24. CEA publishes an annual average, not hourly values, so our lower solar-hour and higher evening figures are a modelling assumption |
+| Cheap-hour pricing can create a new, larger peak | Bailey, Brown, Myers, Shaffer and Wolak, [NBER Working Paper 32886](https://www.nber.org/papers/w32886), August 2024 | A field experiment found time-of-use pricing shifts EV charging off-peak but "unintentionally induces new and larger shadow peaks of simultaneous charging", and that centrally managed charging reduces transformer capacity requirements |
+| The size of that effect on distribution feeders | Jones et al., [Energy Reports 8 (2022), 8225-8235](https://www.sandia.gov/research/publications/details/impact-of-electric-vehicle-customer-response-to-time-of-use-rates-on-distri-2022-11-01/) | Simulations of 10 feeders at projected 2030 EV adoption found peak demand up to 20% higher when charging starts right after the on-peak period ends, and lower peaks when start times are spread out |
+
+Checked on 10 October 2026. Two caveats: the CEA figure was read from secondary reports of the CEA guide, because the CEA site could not be opened directly, and newer CEA versions (21.0 and 22.0) exist whose figures were not checked. The two studies are from Canada and the United States; no Indian field study of this effect was found.
 
 ---
 
