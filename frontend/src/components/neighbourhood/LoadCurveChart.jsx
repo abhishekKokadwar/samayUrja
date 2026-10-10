@@ -18,6 +18,8 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
+  ReferenceDot,
 } from 'recharts'
 
 function slotLabel(s) {
@@ -37,10 +39,46 @@ function buildChartData(unmanaged, independent, coordinated, transformerCapacity
   }))
 }
 
+// Contiguous runs of slots at the cheapest price and at the dearest price.
+// Shading them behind the lines shows why load moves where it does.
+function tariffBands(priceSlots) {
+  if (!priceSlots?.length) return []
+  const lo = Math.min(...priceSlots)
+  const hi = Math.max(...priceSlots)
+  if (hi - lo < 1e-9) return [] // flat tariff: nothing to shade
+  const bands = []
+  const collect = (target, kind) => {
+    let start = null
+    for (let s = 0; s <= priceSlots.length; s++) {
+      const hit = s < priceSlots.length && Math.abs(priceSlots[s] - target) < 1e-9
+      if (hit && start === null) start = s
+      if (!hit && start !== null) {
+        bands.push({ kind, from: slotLabel(start), to: slotLabel(Math.min(s, priceSlots.length - 1)) })
+        start = null
+      }
+    }
+  }
+  collect(lo, 'cheap')
+  collect(hi, 'peak')
+  return bands
+}
+
+// The highest point of each strategy, labelled on the chart.
+function peaks(data) {
+  return ['unmanaged', 'independent', 'coordinated']
+    .map(key => {
+      const top = data.reduce((best, d) => (d[key] != null && (best === null || d[key] > best[key]) ? d : best), null)
+      return top ? { key, time: top.time, kw: top[key] } : null
+    })
+    .filter(Boolean)
+}
+
 const STRATEGY_COLORS = {
-  unmanaged: '#94A3B8',
+  // Grey dashed baseline, amber for the problem case, white for FlockShield.
+  // The dash keeps the baseline readable without relying on colour.
+  unmanaged: '#737373',
   independent: '#F4B860',
-  coordinated: '#43D9A3',
+  coordinated: '#FFFFFF',
 }
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -49,20 +87,20 @@ const CustomTooltip = ({ active, payload, label }) => {
     <div
       className="p-3 rounded-xl text-xs"
       style={{
-        background: '#151F2A',
-        border: '1px solid rgba(148,163,184,0.18)',
+        background: '#141414',
+        border: '1px solid rgba(255,255,255,0.18)',
         boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         minWidth: 180,
       }}
     >
-      <p className="font-semibold text-[#EDF4F7] mb-2">{label}</p>
+      <p className="font-semibold text-[#FFFFFF] mb-2">{label}</p>
       {payload.map(p => p.value != null && (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-            <span className="text-[#94A3B8] capitalize">{p.name}</span>
+            <span className="text-[#A3A3A3]">{p.name}</span>
           </div>
-          <span className="font-semibold tabular-nums" style={{ color: p.color }}>
+          <span className="font-semibold tabular-nums text-[#FFFFFF]">
             {p.value} kW
           </span>
         </div>
@@ -74,18 +112,25 @@ const CustomTooltip = ({ active, payload, label }) => {
 const CustomLegend = ({ payload }) => {
   if (!payload?.length) return null
   const labels = {
-    unmanaged: 'Unmanaged',
-    independent: 'Independent',
+    unmanaged: 'Today (unmanaged)',
+    independent: 'Each home alone',
     coordinated: 'FlockShield',
   }
   return (
-    <div className="flex flex-wrap gap-4 justify-center mt-2">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-2">
       {payload.map(p => (
         <div key={p.dataKey} className="flex items-center gap-1.5">
-          <span className="block w-5 h-0.5 rounded" style={{ background: p.color }} />
-          <span className="text-[0.7rem] text-[#94A3B8]">{labels[p.dataKey] || p.dataKey}</span>
+          <span
+            className="block w-5"
+            style={{ borderTop: `2px ${p.dataKey === 'unmanaged' ? 'dashed' : 'solid'} ${p.color}` }}
+          />
+          <span className="text-xs text-[#A3A3A3]">{labels[p.dataKey] || p.dataKey}</span>
         </div>
       ))}
+      <div className="flex items-center gap-1.5">
+        <span className="block w-5" style={{ borderTop: '2px dashed #F16C75' }} />
+        <span className="text-xs text-[#A3A3A3]">Combined transformer capacity</span>
+      </div>
     </div>
   )
 }
@@ -95,6 +140,7 @@ export function LoadCurveChart({
   independentDemand,
   coordinatedDemand,
   transformerCapacityKw,
+  priceSlots,
   loading,
 }) {
   if (loading) {
@@ -118,33 +164,53 @@ export function LoadCurveChart({
   ].filter(Boolean)
   // Include the capacity line so it is always inside the visible range.
   const maxVal = Math.max(allValues.length ? Math.max(...allValues) : 100, transformerCapacityKw || 0)
+  // Net demand goes below zero when rooftop solar exports more than homes use.
+  const minVal = Math.min(0, ...allValues)
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+    <ResponsiveContainer width="100%" height={440}>
+      <ComposedChart data={data} margin={{ top: 22, right: 16, bottom: 4, left: 0 }}>
         <CartesianGrid
           strokeDasharray="3 3"
-          stroke="rgba(148,163,184,0.08)"
+          stroke="rgba(255,255,255,0.08)"
           vertical={false}
         />
         <XAxis
           dataKey="time"
           ticks={xTicks}
-          tick={{ fill: '#94A3B8', fontSize: 10 }}
-          axisLine={{ stroke: 'rgba(148,163,184,0.15)' }}
+          tick={{ fill: '#A3A3A3', fontSize: 12 }}
+          axisLine={{ stroke: 'rgba(255,255,255,0.15)' }}
           tickLine={false}
-          label={{ value: 'Time of day', position: 'insideBottom', offset: -2, fill: '#94A3B8', fontSize: 10 }}
+          label={{ value: 'Time of day', position: 'insideBottom', offset: -2, fill: '#A3A3A3', fontSize: 12 }}
         />
         <YAxis
-          tick={{ fill: '#94A3B8', fontSize: 10 }}
+          tick={{ fill: '#A3A3A3', fontSize: 12 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={v => `${v}`}
-          label={{ value: 'kW', angle: -90, position: 'insideLeft', offset: 10, fill: '#94A3B8', fontSize: 10 }}
-          domain={[0, Math.ceil(maxVal * 1.12)]}
+          label={{ value: 'kW', angle: -90, position: 'insideLeft', offset: 10, fill: '#A3A3A3', fontSize: 12 }}
+          domain={[Math.floor(minVal * 1.12), Math.ceil(maxVal * 1.12)]}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend content={<CustomLegend />} />
+
+        {/* Tariff bands: cheapest hours and peak-price hours */}
+        {tariffBands(priceSlots).map(b => (
+          <ReferenceArea
+            key={`${b.kind}-${b.from}`}
+            x1={b.from}
+            x2={b.to}
+            fill={b.kind === 'cheap' ? '#FFFFFF' : '#F16C75'}
+            fillOpacity={b.kind === 'cheap' ? 0.07 : 0.09}
+            stroke="none"
+            label={{
+              value: b.kind === 'cheap' ? 'Cheapest' : 'Peak price',
+              position: 'insideBottom',
+              fill: '#A3A3A3',
+              fontSize: 12,
+            }}
+          />
+        ))}
 
         {/* Transformer capacity reference line */}
         {transformerCapacityKw && (
@@ -153,16 +219,16 @@ export function LoadCurveChart({
             stroke="#F16C75"
             strokeDasharray="4 2"
             strokeWidth={1.5}
-            label={{ value: 'Combined transformer capacity', position: 'insideTopRight', fill: '#F16C75', fontSize: 9 }}
           />
         )}
 
         <Line
           type="monotone"
           dataKey="unmanaged"
-          name="unmanaged"
+          name="Today"
           stroke={STRATEGY_COLORS.unmanaged}
           strokeWidth={1.5}
+          strokeDasharray="5 4"
           dot={false}
           activeDot={{ r: 4, strokeWidth: 0 }}
           opacity={0.7}
@@ -170,7 +236,7 @@ export function LoadCurveChart({
         <Line
           type="monotone"
           dataKey="independent"
-          name="independent"
+          name="Each home alone"
           stroke={STRATEGY_COLORS.independent}
           strokeWidth={2}
           dot={false}
@@ -179,12 +245,35 @@ export function LoadCurveChart({
         <Line
           type="monotone"
           dataKey="coordinated"
-          name="coordinated"
+          name="FlockShield"
           stroke={STRATEGY_COLORS.coordinated}
           strokeWidth={2.5}
           dot={false}
           activeDot={{ r: 4, strokeWidth: 0 }}
         />
+
+        {/* Peak of each strategy, labelled directly */}
+        {peaks(data).map(pk => (
+          <ReferenceDot
+            key={pk.key}
+            x={pk.time}
+            y={pk.kw}
+            r={4}
+            fill={STRATEGY_COLORS[pk.key]}
+            stroke="#000000"
+            strokeWidth={2}
+            label={{
+              value: `${Math.round(pk.kw).toLocaleString('en-IN')} kW · ${pk.time}`,
+              position:
+                transformerCapacityKw && Math.abs(pk.kw - transformerCapacityKw) < transformerCapacityKw * 0.1
+                  ? 'bottom'
+                  : 'top',
+              fill: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          />
+        ))}
       </ComposedChart>
     </ResponsiveContainer>
   )

@@ -1,13 +1,13 @@
 /**
  * ScenarioControls — Neighbourhood simulation configuration panel.
  *
- * Sliders and inputs for all scenario parameters.
- * Simulation only runs when user clicks "Run Simulation" (not on every slider change).
+ * Presets for the common cases, with every individual control under "Advanced".
+ * The page owns the parameters and reruns the simulation whenever they change.
  */
 import { useState, useEffect } from 'react'
-import { Play, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react'
+import { RotateCcw, ChevronDown, ChevronRight } from 'lucide-react'
 
-const DEFAULT_SCENARIO = {
+export const DEFAULT_SCENARIO = {
   n_homes: 500,
   n_transformers: 5,
   transformer_capacity_kw: 200,
@@ -19,6 +19,29 @@ const DEFAULT_SCENARIO = {
   sanctioned_load_kw: 5,
   seed: 42,
 }
+
+// Each preset is the default scenario with a few values changed.
+export const PRESETS = [
+  { id: 'today', label: 'Today', hint: 'Flat tariff, 10% of homes own an EV',
+    params: { tariff_id: 'flat-domestic-illustrative', ev_adoption_rate: 0.10 } },
+  { id: 'ev-tariff', label: 'EV night tariff', hint: 'Cheap power after midnight, 30% EVs',
+    params: {} },
+  { id: 'high-ev', label: 'High EV adoption', hint: 'EV night tariff, 60% EVs',
+    params: { ev_adoption_rate: 0.60 } },
+  { id: 'day-tod', label: 'Daytime ToD tariff', hint: 'Cheap solar hours, costly evenings',
+    params: { tariff_id: 'tod-domestic-illustrative' } },
+  { id: 'flat', label: 'Flat tariff', hint: 'Same price all day, 30% EVs',
+    params: { tariff_id: 'flat-domestic-illustrative' } },
+]
+
+export const presetParams = preset => ({ ...DEFAULT_SCENARIO, ...preset.params })
+
+// The preset whose values match the current parameters exactly, if any.
+export const activePresetId = params =>
+  PRESETS.find(p => {
+    const target = presetParams(p)
+    return Object.keys(target).every(k => target[k] === params[k]) && !params.enable_load_shedding
+  })?.id ?? null
 
 const UNIT_PCT = { type: 'pct', label: '%' }
 const UNIT_KW = { type: 'kw', label: 'kW' }
@@ -68,7 +91,7 @@ function SliderRow({ label, name, value, min, max, step, unit = UNIT_NONE, onCha
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <label className="text-xs text-[#94A3B8] font-medium" htmlFor={`slider-${name}`}>
+        <label className="text-xs text-[#A3A3A3] font-medium" htmlFor={`slider-${name}`}>
           {label}
         </label>
         <div className="flex items-center justify-end">
@@ -77,11 +100,11 @@ function SliderRow({ label, name, value, min, max, step, unit = UNIT_NONE, onCha
             value={inputValue}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
-            className="text-xs font-semibold tabular-nums text-right bg-transparent border border-transparent hover:border-[rgba(67,217,163,0.3)] focus:border-[#43D9A3] focus:bg-[#151F2A] focus:outline-none rounded px-1 py-0.5 transition-all no-spinners"
-            style={{ color: '#43D9A3', width: '3.5rem', MozAppearance: 'textfield' }}
+            className="text-xs font-semibold tabular-nums text-right bg-transparent border border-transparent hover:border-[rgba(255,255,255,0.3)] focus:border-[#FFFFFF] focus:bg-[#141414] focus:outline-none rounded px-1 py-0.5 transition-all no-spinners"
+            style={{ color: '#FFFFFF', width: '3.5rem', MozAppearance: 'textfield' }}
           />
           {unit.label && (
-            <span className="text-xs font-semibold ml-0.5" style={{ color: '#43D9A3' }}>
+            <span className="text-xs font-semibold ml-0.5" style={{ color: '#FFFFFF' }}>
               {unit.label}
             </span>
           )}
@@ -96,10 +119,10 @@ function SliderRow({ label, name, value, min, max, step, unit = UNIT_NONE, onCha
         value={isPct ? Math.round(value * 100) : value}
         onChange={handleSliderChange}
         className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-        style={{ accentColor: '#43D9A3' }}
+        style={{ accentColor: '#FFFFFF' }}
         aria-label={label}
       />
-      <div className="flex justify-between text-[0.6rem] text-[#94A3B8]">
+      <div className="flex justify-between text-xs text-[#A3A3A3]">
         <span>{displayMin}{unit.label && ` ${unit.label}`}</span>
         <span>{displayMax}{unit.label && ` ${unit.label}`}</span>
       </div>
@@ -113,20 +136,17 @@ const TARIFF_OPTIONS = [
   { id: 'flat-domestic-illustrative', label: 'Flat Rate' },
 ]
 
-export function ScenarioControls({ onRun, loading }) {
-  const [params, setParams] = useState(DEFAULT_SCENARIO)
-  const [open, setOpen] = useState(true)
+export function ScenarioControls({ params, onChange }) {
+  const [open, setOpen] = useState(false)
 
-  const set = (name, val) => setParams(prev => ({ ...prev, [name]: val }))
+  const set = (name, val) => onChange({ ...params, [name]: val })
 
-  const reset = () => setParams(DEFAULT_SCENARIO)
-
-  const handleRun = () => onRun(params)
+  const reset = () => onChange(DEFAULT_SCENARIO)
 
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: '#101922', border: '1px solid rgba(148,163,184,0.14)' }}
+      style={{ background: '#0A0A0A', border: '1px solid rgba(255,255,255,0.14)' }}
     >
       <style>{`
         .no-spinners::-webkit-inner-spin-button,
@@ -138,19 +158,19 @@ export function ScenarioControls({ onRun, loading }) {
       
       {/* Header */}
       <button
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#151F2A] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#141414] transition-colors"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold text-[#EDF4F7]">Scenario Controls</span>
-        {open ? <ChevronDown size={15} color="#94A3B8" /> : <ChevronRight size={15} color="#94A3B8" />}
+        <span className="text-sm font-semibold text-[#FFFFFF]">Advanced controls</span>
+        {open ? <ChevronDown size={15} color="#A3A3A3" /> : <ChevronRight size={15} color="#A3A3A3" />}
       </button>
 
       {open && (
         <div className="px-4 pb-4 space-y-5 animate-fade-in">
           {/* Population */}
           <section>
-            <p className="text-[0.65rem] text-[#94A3B8] uppercase tracking-wider font-semibold mb-3">
+            <p className="text-xs text-[#A3A3A3] uppercase tracking-wider font-semibold mb-3">
               Population
             </p>
             <div className="space-y-4">
@@ -169,7 +189,7 @@ export function ScenarioControls({ onRun, loading }) {
 
           {/* Adoption rates */}
           <section>
-            <p className="text-[0.65rem] text-[#94A3B8] uppercase tracking-wider font-semibold mb-3">
+            <p className="text-xs text-[#A3A3A3] uppercase tracking-wider font-semibold mb-3">
               Adoption Rates
             </p>
             <div className="space-y-4">
@@ -186,7 +206,7 @@ export function ScenarioControls({ onRun, loading }) {
 
           {/* Tariff */}
           <section>
-            <p className="text-[0.65rem] text-[#94A3B8] uppercase tracking-wider font-semibold mb-2">
+            <p className="text-xs text-[#A3A3A3] uppercase tracking-wider font-semibold mb-2">
               Tariff
             </p>
             <div className="space-y-1.5">
@@ -198,9 +218,9 @@ export function ScenarioControls({ onRun, loading }) {
                     value={t.id}
                     checked={params.tariff_id === t.id}
                     onChange={() => set('tariff_id', t.id)}
-                    className="accent-[#43D9A3]"
+                    className="accent-[#FFFFFF]"
                   />
-                  <span className={`text-xs ${params.tariff_id === t.id ? 'text-[#43D9A3] font-medium' : 'text-[#94A3B8]'}`}>
+                  <span className={`text-xs ${params.tariff_id === t.id ? 'text-[#FFFFFF] font-medium' : 'text-[#A3A3A3]'}`}>
                     {t.label}
                   </span>
                 </label>
@@ -210,7 +230,7 @@ export function ScenarioControls({ onRun, loading }) {
 
           {/* Constraints */}
           <section>
-            <p className="text-[0.65rem] text-[#94A3B8] uppercase tracking-wider font-semibold mb-2">
+            <p className="text-xs text-[#A3A3A3] uppercase tracking-wider font-semibold mb-2">
               Constraints
             </p>
             <div className="space-y-1.5">
@@ -219,9 +239,9 @@ export function ScenarioControls({ onRun, loading }) {
                   type="checkbox"
                   checked={params.enable_load_shedding || false}
                   onChange={(e) => set('enable_load_shedding', e.target.checked)}
-                  className="accent-[#43D9A3]"
+                  className="accent-[#FFFFFF]"
                 />
-                <span className={`text-xs ${params.enable_load_shedding ? 'text-[#43D9A3] font-medium' : 'text-[#94A3B8]'}`}>
+                <span className={`text-xs ${params.enable_load_shedding ? 'text-[#FFFFFF] font-medium' : 'text-[#A3A3A3]'}`}>
                   Strict Capacity Limits (Load Shedding)
                 </span>
               </label>
@@ -241,29 +261,10 @@ export function ScenarioControls({ onRun, loading }) {
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={handleRun}
-              disabled={loading}
-              className="btn-primary flex-1 justify-center"
-            >
-              {loading ? (
-                <>
-                  <span className="w-3 h-3 border-2 border-[#080D12] border-t-transparent rounded-full animate-spin" />
-                  Simulating…
-                </>
-              ) : (
-                <>
-                  <Play size={14} />
-                  Run Simulation
-                </>
-              )}
-            </button>
-            <button onClick={reset} className="btn-secondary" title="Reset to defaults" disabled={loading}>
-              <RotateCcw size={14} />
-            </button>
-          </div>
+          <button onClick={reset} className="btn-secondary" title="Reset to defaults">
+            <RotateCcw size={14} />
+            Reset to defaults
+          </button>
         </div>
       )}
     </div>

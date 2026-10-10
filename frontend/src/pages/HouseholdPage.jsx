@@ -49,12 +49,12 @@ function StatusPill({ loading, error, result }) {
   const cfg = {
     optimizing: { label: 'Optimizing…', bg: 'rgba(244,184,96,0.1)',  fg: '#F4B860', dot: '#F4B860'  },
     error:      { label: 'Error',       bg: 'rgba(241,108,117,0.1)', fg: '#F16C75', dot: '#F16C75'  },
-    ready:      { label: 'Ready',       bg: 'rgba(67,217,163,0.08)', fg: '#43D9A3', dot: '#43D9A3'  },
-    idle:       { label: 'Idle',        bg: 'rgba(148,163,184,0.06)',fg: '#94A3B8', dot: '#94A3B8'  },
+    ready:      { label: 'Ready',       bg: 'rgba(255,255,255,0.08)', fg: '#FFFFFF', dot: '#FFFFFF'  },
+    idle:       { label: 'Idle',        bg: 'rgba(255,255,255,0.06)',fg: '#A3A3A3', dot: '#A3A3A3'  },
   }[status]
 
   return (
-    <span className="text-[0.62rem] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
+    <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
       style={{ background: cfg.bg, color: cfg.fg, border: `1px solid ${cfg.dot}30` }}>
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
       {cfg.label}
@@ -180,12 +180,12 @@ export default function HouseholdPage() {
       {/* ── A. Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
-          <h1 className="text-lg font-bold text-[#EDF4F7] tracking-tight flex-shrink-0">
+          <h1 className="text-lg font-bold text-[#FFFFFF] tracking-tight flex-shrink-0">
             Household Energy
           </h1>
           <StatusPill loading={loading} error={error} result={result} />
           {result && !loading && (
-            <span className="text-[0.65rem] text-[#94A3B8] tabular-nums hidden sm:inline">
+            <span className="text-xs text-[#A3A3A3] tabular-nums hidden sm:inline">
               {profile.appliances.length} appliance{profile.appliances.length !== 1 ? 's' : ''}
             </span>
           )}
@@ -214,7 +214,7 @@ export default function HouseholdPage() {
             className="btn-primary text-xs"
           >
             {loading ? (
-              <span className="w-3 h-3 border-2 border-[#080D12] border-t-transparent rounded-full animate-spin" />
+              <span className="w-3 h-3 border-2 border-[#000000] border-t-transparent rounded-full animate-spin" />
             ) : (
               <Zap size={13} />
             )}
@@ -240,8 +240,8 @@ export default function HouseholdPage() {
         {/* Profile settings */}
         <div className="card lg:col-span-1">
           <div className="flex items-center gap-2 mb-4">
-            <Settings2 size={14} color="#58BFE8" />
-            <h2 className="text-sm font-semibold text-[#EDF4F7]">Profile Settings</h2>
+            <Settings2 size={14} color="#FFFFFF" />
+            <h2 className="text-sm font-semibold text-[#FFFFFF]">Profile Settings</h2>
           </div>
           <div className="space-y-3">
             <div>
@@ -256,7 +256,7 @@ export default function HouseholdPage() {
                   <option key={t.id} value={t.id}>{t.label}</option>
                 ))}
               </select>
-              <p className="text-[0.63rem] text-[#94A3B8] mt-1">
+              <p className="text-xs text-[#A3A3A3] mt-1">
                 Illustrative tariff — not a real DISCOM tariff.
               </p>
             </div>
@@ -277,9 +277,9 @@ export default function HouseholdPage() {
         {/* Appliances */}
         <div className="card lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
-            <Zap size={14} color="#43D9A3" />
-            <h2 className="text-sm font-semibold text-[#EDF4F7]">Appliances</h2>
-            <span className="text-[0.65rem] text-[#94A3B8] ml-auto">
+            <Zap size={14} color="#FFFFFF" />
+            <h2 className="text-sm font-semibold text-[#FFFFFF]">Appliances</h2>
+            <span className="text-xs text-[#A3A3A3] ml-auto">
               {profile.appliances.length} / 20
             </span>
           </div>
@@ -300,15 +300,15 @@ export default function HouseholdPage() {
             aria-expanded={gridOpen}
           >
             <div className="flex items-center gap-2">
-              <Calendar size={14} color="#94A3B8" />
-              <h2 className="text-sm font-semibold text-[#EDF4F7]">Weekly Schedule</h2>
+              <Calendar size={14} color="#A3A3A3" />
+              <h2 className="text-sm font-semibold text-[#FFFFFF]">Weekly Schedule</h2>
               {result?.runs && (
-                <span className="text-[0.62rem] text-[#94A3B8]">
+                <span className="text-xs text-[#A3A3A3]">
                   {result.runs.filter(r => r.new_start !== r.current_start).length} runs moved
                 </span>
               )}
             </div>
-            <span className="text-[0.65rem] text-[#94A3B8]">{gridOpen ? '▲' : '▼'}</span>
+            <span className="text-xs text-[#A3A3A3]">{gridOpen ? '▲' : '▼'}</span>
           </button>
           {gridOpen && (
             <div className="mt-4">

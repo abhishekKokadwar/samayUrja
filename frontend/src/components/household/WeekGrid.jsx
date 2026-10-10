@@ -14,7 +14,7 @@ import { useMemo } from 'react'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const SLOT_H_PX = 14  // pixels per half-hour slot
-const COLORS = ['#43D9A3', '#58BFE8', '#F4B860', '#A78BFA', '#F16C75', '#34D399', '#818CF8']
+const COLORS = ['#FFFFFF', '#FFFFFF', '#F4B860', '#A3A3A3', '#F16C75', '#A3A3A3', '#A3A3A3']
 
 function slotLabel(s) {
   const h = Math.floor(s / 2)
@@ -32,8 +32,8 @@ function getBandColor(slot, tariff) {
   const maxP = Math.max(...priceSlots)
   const minP = Math.min(...priceSlots)
   if (price >= maxP * 0.95) return 'rgba(241,108,117,0.06)'  // peak
-  if (price <= minP * 1.05) return 'rgba(67,217,163,0.06)'   // solar/cheap
-  return 'rgba(148,163,184,0.03)'                             // normal
+  if (price <= minP * 1.05) return 'rgba(255,255,255,0.06)'   // solar/cheap
+  return 'rgba(255,255,255,0.03)'                             // normal
 }
 
 export function WeekGrid({ runs, tariff }) {
@@ -49,8 +49,8 @@ export function WeekGrid({ runs, tariff }) {
     return (
       <div className="flex items-center justify-center py-16 text-center">
         <div>
-          <p className="text-[#94A3B8] text-sm">No schedule to display</p>
-          <p className="text-[#94A3B8] text-xs mt-1">Add appliances and run the optimizer.</p>
+          <p className="text-[#A3A3A3] text-sm">No schedule to display</p>
+          <p className="text-[#A3A3A3] text-xs mt-1">Add appliances and run the optimizer.</p>
         </div>
       </div>
     )
@@ -62,7 +62,7 @@ export function WeekGrid({ runs, tariff }) {
         {/* Header row */}
         <div className="flex" style={{ marginLeft: 36 }}>
           {DAYS.map(d => (
-            <div key={d} className="flex-1 text-center text-[0.65rem] text-[#94A3B8] font-semibold pb-1.5">
+            <div key={d} className="flex-1 text-center text-xs text-[#A3A3A3] font-semibold pb-1.5">
               {d}
             </div>
           ))}
@@ -75,7 +75,7 @@ export function WeekGrid({ runs, tariff }) {
             {Array.from({ length: 48 }, (_, s) => (
               <div
                 key={s}
-                className="text-right pr-1.5 text-[0.55rem] text-[#94A3B8] leading-none"
+                className="text-right pr-1.5 text-xs text-[#A3A3A3] leading-none"
                 style={{ height: SLOT_H_PX, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
               >
                 {slotLabel(s)}
@@ -85,7 +85,7 @@ export function WeekGrid({ runs, tariff }) {
 
           {/* Day columns */}
           {DAYS.map((day, dayIdx) => (
-            <div key={day} className="flex-1 relative border-l" style={{ borderColor: 'rgba(148,163,184,0.08)' }}>
+            <div key={day} className="flex-1 relative border-l" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
               {/* Slot backgrounds */}
               {Array.from({ length: 48 }, (_, s) => (
                 <div
@@ -93,7 +93,7 @@ export function WeekGrid({ runs, tariff }) {
                   style={{
                     height: SLOT_H_PX,
                     background: getBandColor(s, tariff),
-                    borderBottom: s % 2 === 1 ? '1px solid rgba(148,163,184,0.06)' : 'none',
+                    borderBottom: s % 2 === 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                   }}
                 />
               ))}
@@ -101,7 +101,7 @@ export function WeekGrid({ runs, tariff }) {
               {/* Run blocks — positioned absolutely */}
               {runs.map(run => {
                 if (!run.days.includes(dayIdx)) return null
-                const color = appColors[run.name] || '#43D9A3'
+                const color = appColors[run.name] || '#FFFFFF'
 
                 // Original block (faint, outlined)
                 const origSlot = run.current_start
@@ -152,8 +152,8 @@ export function WeekGrid({ runs, tariff }) {
                     >
                       {n >= 2 && (
                         <span
-                          className="text-[0.5rem] font-semibold truncate leading-tight"
-                          style={{ color: '#080D12', padding: '1px 3px' }}
+                          className="text-xs font-semibold truncate leading-tight"
+                          style={{ color: '#000000', padding: '1px 3px' }}
                         >
                           {run.name.length > 8 ? run.name.split(' ')[0] : run.name}
                         </span>
@@ -171,12 +171,12 @@ export function WeekGrid({ runs, tariff }) {
           {runs.map(run => (
             <div key={run.name} className="flex items-center gap-1.5">
               <span className="w-3 h-2 rounded-sm" style={{ background: appColors[run.name] }} />
-              <span className="text-[0.65rem] text-[#94A3B8]">{run.name}</span>
+              <span className="text-xs text-[#A3A3A3]">{run.name}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-2 rounded-sm border border-dashed border-[#94A3B8]" style={{ background: 'transparent' }} />
-            <span className="text-[0.65rem] text-[#94A3B8]">Original position</span>
+            <span className="w-3 h-2 rounded-sm border border-dashed border-[#A3A3A3]" style={{ background: 'transparent' }} />
+            <span className="text-xs text-[#A3A3A3]">Original position</span>
           </div>
         </div>
       </div>

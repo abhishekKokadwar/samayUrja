@@ -9,19 +9,19 @@ export default {
       colors: {
         // Murmuration design tokens
         bg: {
-          main: '#080D12',
-          sidebar: '#0B1219',
-          card: '#101922',
-          elevated: '#151F2A',
+          main: '#000000',
+          sidebar: '#000000',
+          card: '#0A0A0A',
+          elevated: '#141414',
         },
         border: {
-          subtle: 'rgba(148, 163, 184, 0.14)',
+          subtle: '#1A1A1A',
         },
         emerald: {
-          mur: '#43D9A3',
+          mur: '#FFFFFF',
         },
         cyan: {
-          mur: '#58BFE8',
+          mur: '#FFFFFF',
         },
         amber: {
           mur: '#F4B860',
@@ -30,12 +30,12 @@ export default {
           mur: '#F16C75',
         },
         text: {
-          primary: '#EDF4F7',
-          secondary: '#94A3B8',
+          primary: '#FFFFFF',
+          secondary: '#A3A3A3',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Arial', 'Helvetica', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       fontVariantNumeric: ['tabular-nums'],

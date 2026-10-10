@@ -50,7 +50,7 @@ function ApplianceRow({ app, index, onChange, onDelete }) {
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={{ background: '#151F2A', border: '1px solid rgba(148,163,184,0.12)' }}
+      style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.12)' }}
     >
       {/* Collapsed header */}
       <div className="flex items-center gap-2 px-3 py-2.5">
@@ -62,14 +62,14 @@ function ApplianceRow({ app, index, onChange, onDelete }) {
         >
           <span className="text-sm">{TEMPLATE_ICONS[app.name] || '🔌'}</span>
           <div className="min-w-0 flex-1">
-            <p className="text-[0.8rem] font-medium text-[#EDF4F7] truncate">{app.name}</p>
-            <p className="text-[0.65rem] text-[#94A3B8] tabular-nums">
+            <p className="text-[0.8rem] font-medium text-[#FFFFFF] truncate">{app.name}</p>
+            <p className="text-xs text-[#A3A3A3] tabular-nums">
               {app.power_kw} kW · {app.duration_min} min · {app.days_per_week}d/wk · starts {app.current_start}
             </p>
           </div>
           {expanded
-            ? <ChevronUp size={14} color="#94A3B8" className="flex-shrink-0" />
-            : <ChevronDown size={14} color="#94A3B8" className="flex-shrink-0" />
+            ? <ChevronUp size={14} color="#A3A3A3" className="flex-shrink-0" />
+            : <ChevronDown size={14} color="#A3A3A3" className="flex-shrink-0" />
           }
         </button>
         <button
@@ -83,7 +83,7 @@ function ApplianceRow({ app, index, onChange, onDelete }) {
 
       {/* Expanded editor */}
       {expanded && (
-        <div className="px-3 pb-3 pt-1 grid grid-cols-2 gap-3 border-t" style={{ borderColor: 'rgba(148,163,184,0.1)' }}>
+        <div className="px-3 pb-3 pt-1 grid grid-cols-2 gap-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
           <div>
             <label className="form-label" htmlFor={`name-${index}`}>Name</label>
             <input id={`name-${index}`} className="form-input" value={app.name}
@@ -120,8 +120,8 @@ function ApplianceRow({ app, index, onChange, onDelete }) {
             onChange={v => set('latest_end', v)} />
           <div className="flex items-center gap-2 pt-4">
             <input id={`shift-${index}`} type="checkbox" checked={app.shiftable}
-              onChange={e => set('shiftable', e.target.checked)} className="accent-[#43D9A3]" />
-            <label htmlFor={`shift-${index}`} className="text-xs text-[#94A3B8] cursor-pointer">
+              onChange={e => set('shiftable', e.target.checked)} className="accent-[#FFFFFF]" />
+            <label htmlFor={`shift-${index}`} className="text-xs text-[#A3A3A3] cursor-pointer">
               Can be shifted
             </label>
           </div>
@@ -158,12 +158,12 @@ export function ApplianceForm({ appliances, onChange }) {
               onClick={() => addTemplate(t)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
               style={{
-                background: 'rgba(67,217,163,0.06)',
-                border: '1px solid rgba(67,217,163,0.18)',
-                color: '#43D9A3',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: '#FFFFFF',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(67,217,163,0.12)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(67,217,163,0.06)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
             >
               <span>{TEMPLATE_ICONS[t.name] || '🔌'}</span>
               {t.name}
@@ -176,11 +176,11 @@ export function ApplianceForm({ appliances, onChange }) {
       {appliances.length === 0 ? (
         <div
           className="flex flex-col items-center justify-center py-8 rounded-xl text-center"
-          style={{ border: '1px dashed rgba(148,163,184,0.2)' }}
+          style={{ border: '1px dashed rgba(255,255,255,0.2)' }}
         >
-          <Plus size={24} color="#94A3B8" className="mb-2 opacity-50" />
-          <p className="text-[#94A3B8] text-sm">No appliances yet</p>
-          <p className="text-[#94A3B8] text-xs mt-1">Use the quick-add buttons above or add manually.</p>
+          <Plus size={24} color="#A3A3A3" className="mb-2 opacity-50" />
+          <p className="text-[#A3A3A3] text-sm">No appliances yet</p>
+          <p className="text-[#A3A3A3] text-xs mt-1">Use the quick-add buttons above or add manually.</p>
         </div>
       ) : (
         <div className="space-y-2">
