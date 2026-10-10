@@ -1,0 +1,231 @@
+# 18. PROFESSIONAL UI/UX AND VISUAL DESIGN — NON-NEGOTIABLE
+
+The UI must look like a polished, production-grade climate-tech startup product suitable for an AWS hackathon judging panel, technical interview, and real-world demonstration.
+
+Do not build a generic admin dashboard, a basic Tailwind template, or a collection of plain cards. The design must communicate intelligent energy coordination, technical sophistication, and trustworthiness.
+
+## Design inspiration
+
+Use the visual quality of premium energy intelligence platforms, sophisticated developer tools, and modern SaaS products as inspiration. Do not copy an existing product.
+
+### Visual identity
+
+- Product: Murmuration
+- Tagline: Many homes. One intelligent grid.
+- Core engine: FlockShield
+- Simulation: Murmuration GridLab
+
+Use a refined dark interface as the primary dashboard theme.
+
+Color palette:
+- Main background: `#080D12`
+- Sidebar and navigation surfaces: `#0B1219`
+- Card surfaces: `#101922`
+- Elevated surfaces: `#151F2A`
+- Subtle borders: `rgba(148, 163, 184, 0.14)`
+- Primary emerald: `#43D9A3`
+- Secondary cyan: `#58BFE8`
+- Warning amber: `#F4B860`
+- Critical red: `#F16C75`
+- Primary text: `#EDF4F7`
+- Secondary text: `#94A3B8`
+
+Use these as starting design tokens and maintain consistency across the application. Avoid making every component brightly colored.
+
+Use emerald for positive outcomes, cyan for informational energy data, amber for approaching capacity limits, and red for actual overloads or critical errors.
+
+### Typography and spacing
+
+- Use a modern, highly legible sans-serif typeface.
+- Use consistent font weights and restrained type sizes.
+- Use tabular numerals for KPIs, prices, power values, and time-series labels.
+- Establish a clear hierarchy between page titles, section headings, metrics, and supporting descriptions.
+- Use consistent spacing, alignment, and card padding.
+- Use rounded corners in the 10–16 px range.
+- Keep borders subtle and shadows restrained.
+- Use lucide-react icons consistently.
+- Never use emojis as substitutes for interface icons.
+
+Avoid excessive gradients, oversized typography, neon effects, decorative glassmorphism everywhere, or large empty hero sections that waste valuable dashboard space.
+
+## Application layout
+
+Create a proper application shell with:
+
+1. A narrow, elegant sidebar or compact navigation rail.
+2. A clear Murmuration brand mark and product name.
+3. Navigation for Overview, Neighbourhood, Household Optimizer, and Scenario Lab.
+4. A main content region with a consistent maximum-width strategy.
+5. A restrained top bar containing the current view, simulation status, and scenario controls where appropriate.
+6. Responsive navigation for mobile screens.
+
+The Neighbourhood view should be the default landing page because neighbourhood coordination is the product's main innovation.
+
+The initial view should immediately communicate what Murmuration does and show useful simulation results without requiring the user to fill out a form.
+
+## Neighbourhood dashboard design
+
+Design the page in this order:
+
+**1. Page header**
+
+Title: Neighbourhood Intelligence
+
+Subtitle: Coordinate flexible demand. Prevent rebound peaks. Protect local grid capacity.
+
+Include a clear simulation status indicator and a primary action to run the selected scenario.
+
+**2. KPI row**
+
+Use a carefully aligned set of metric cards for:
+
+- Neighbourhood peak demand.
+- Peak-to-average ratio.
+- Maximum transformer utilization.
+- Estimated household savings.
+- Estimated CO2 avoided.
+- Transformer overload slots.
+
+Do not squeeze all six into one row on small screens. Use a responsive grid.
+
+Each card should include:
+- A small meaningful icon.
+- A concise label.
+- A prominent numerical value.
+- A unit where appropriate.
+- A short contextual comparison or status.
+
+Only display comparisons that have been calculated from the actual simulation results.
+
+**3. Main analytical region**
+
+Use a two-column desktop layout.
+
+The larger panel contains the neighbourhood demand chart with the three strategies:
+- Unmanaged.
+- Independent optimization.
+- FlockShield coordination.
+
+The smaller panel contains transformer health and utilization information.
+
+The chart must have:
+- Clearly labelled axes.
+- Time labels from 00:00 to 24:00.
+- A legend that identifies all three strategies.
+- Tooltips with time, demand, strategy, and units.
+- Responsive sizing.
+- An obvious way to identify the rebound peak.
+
+Make the load curve the visual centerpiece. It is the clearest demonstration of the project's core innovation.
+
+**4. Digital neighbourhood map**
+
+Create a visually attractive schematic neighbourhood showing homes connected to transformers.
+
+- Homes should be represented as small, distinct building or house symbols.
+- Transformers should be visually prominent nodes.
+- Connections should communicate which homes share a transformer.
+- Utilization should be visible through status indicators.
+- Selecting a transformer should reveal its capacity, current simulated load, utilization percentage, connected homes, and any violations.
+- Include a legend for normal, approaching capacity, and overloaded states.
+- Avoid a static decorative map that does not correspond to simulation data.
+
+If a real geographical map is unnecessary, use an interactive SVG or CSS-based schematic. Do not introduce an external mapping service solely for decoration.
+
+**5. Scenario controls**
+
+Place the controls in a dedicated panel or collapsible drawer.
+
+Include home count, transformer capacity, EV adoption, AC adoption, geyser adoption, solar availability, tariff settings, and strategy selection.
+
+Use sliders, segmented controls, numeric inputs, and concise labels where appropriate.
+
+Include sensible default values, input validation, reset controls, and a prominent Run Simulation button.
+
+Do not trigger an expensive simulation on every slider movement. Let users adjust the scenario and then explicitly run it, showing a loading state while the result is calculated.
+
+**6. Explainability panel**
+
+Add a compact FlockShield decision log.
+
+Each item should explain:
+- Which appliance or home was affected.
+- Its previous and new schedule.
+- The reason for rescheduling.
+- Which constraint influenced the decision.
+- Whether the resulting schedule passed validation.
+
+Generate these entries from actual backend decisions. Never hard-code fictional events.
+
+## Household optimizer design
+
+The household page should share the same visual system without looking like a separate application.
+
+Use a clean two-column desktop layout:
+- Left: household profile and appliance editor.
+- Right: optimization results and savings.
+
+Include:
+- Well-designed appliance template buttons.
+- Compact but readable form rows.
+- Clear time-window inputs.
+- An attractive weekly schedule grid.
+- Distinct tariff bands for solar, normal, and peak periods.
+- Before-and-after cost and carbon charts.
+- A concise explanation for every appliance movement.
+- Helpful empty, loading, validation, and error states.
+
+Make it easy to understand the original schedule versus the recommended schedule without relying only on color.
+
+## Interaction quality
+
+Every visible control must work.
+
+Implement:
+- Hover, focus, active, disabled, and loading states.
+- Smooth but restrained transitions.
+- Tooltips for unfamiliar energy metrics.
+- Confirmation or status feedback for saving profiles.
+- Useful empty states.
+- Clear inline validation errors.
+- Error messages that explain what the user can do next.
+- Responsive chart behavior and horizontally scrollable dense grids when necessary.
+
+Respect reduced-motion preferences. Maintain keyboard accessibility and visible focus indicators.
+
+Do not use animations that imply real-time physical grid telemetry. This is a simulation unless real telemetry is actually connected.
+
+## Technical UI requirements
+
+- Use React components with clear responsibilities.
+- Use Tailwind CSS with reusable design tokens.
+- Use Recharts for analytical charts.
+- Use lucide-react for icons.
+- Avoid excessive dependencies.
+- Do not put the entire application in one giant component.
+- Separate data fetching, simulation state, visualization, and presentation.
+- Keep the UI driven by actual API responses.
+- Use skeletons or subtle placeholders while loading.
+- Preserve previous valid results when a new simulation is running.
+- Ensure all charts and controls remain usable on a 360 px mobile screen.
+- Test the production frontend build after implementing the design.
+
+## Visual quality acceptance test
+
+Before considering the UI complete, inspect the actual running application at desktop and mobile widths.
+
+Verify that:
+1. The first screen looks like a finished product, not a development scaffold.
+2. The Murmuration identity and purpose are immediately understandable.
+3. The load-curve comparison is the dominant visual feature.
+4. The transformer visualization communicates grid constraints clearly.
+5. KPI values and their units are legible and correctly formatted.
+6. Cards, borders, spacing, typography, and icons are consistent.
+7. No content overflows or becomes unreadable on mobile.
+8. Loading, empty, error, and success states are designed.
+9. The interface contains no fake live data, fake metrics, or nonfunctional controls.
+10. The household optimizer and neighbourhood dashboard feel like parts of the same product.
+
+Do not stop at installing Tailwind and producing a basic layout. Implement the full visual system, integrate it with the real application state, run the application, inspect it, and refine the result.
+
+The final impression should be that Murmuration is a credible, technically sophisticated energy-intelligence product—not a hackathon prototype assembled from generic dashboard components.

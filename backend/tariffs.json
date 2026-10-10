@@ -1,0 +1,34 @@
+[
+  {
+    "id": "tod-domestic-illustrative",
+    "name": "ToD Domestic (Illustrative)",
+    "description": "Illustrative Time-of-Day tariff modelled on India's ToD rules. Not a real DISCOM tariff.",
+    "base_inr_per_kwh": 8.0,
+    "bands": [
+      { "label": "solar",  "from": "09:00", "to": "17:00", "multiplier": 0.75, "kg_per_kwh": 0.55 },
+      { "label": "peak",   "from": "18:00", "to": "22:00", "multiplier": 1.20, "kg_per_kwh": 0.82 },
+      { "label": "normal", "multiplier": 1.0, "kg_per_kwh": 0.70 }
+    ]
+  },
+  {
+    "id": "flat-domestic-illustrative",
+    "name": "Flat Rate Domestic (Illustrative)",
+    "description": "Flat rate tariff — same price all day. Illustrative only.",
+    "base_inr_per_kwh": 8.0,
+    "bands": [
+      { "label": "normal", "multiplier": 1.0, "kg_per_kwh": 0.70 }
+    ]
+  },
+  {
+    "id": "tod-ev-illustrative",
+    "name": "ToD EV Charging (Illustrative)",
+    "description": "Illustrative ToD tariff with a deep off-peak discount for EV charging. Not a real DISCOM tariff.",
+    "base_inr_per_kwh": 8.0,
+    "bands": [
+      { "label": "solar",  "from": "09:00", "to": "17:00", "multiplier": 0.70, "kg_per_kwh": 0.52 },
+      { "label": "off-peak", "from": "00:00", "to": "06:00", "multiplier": 0.60, "kg_per_kwh": 0.68 },
+      { "label": "peak",   "from": "18:00", "to": "22:00", "multiplier": 1.30, "kg_per_kwh": 0.85 },
+      { "label": "normal", "multiplier": 1.0, "kg_per_kwh": 0.70 }
+    ]
+  }
+]
