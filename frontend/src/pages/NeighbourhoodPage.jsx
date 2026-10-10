@@ -226,7 +226,18 @@ export default function NeighbourhoodPage() {
           loading={loading && !simResult}
           comparison="Based on illustrative carbon intensity model"
         />
-        {simResult?.scenario?.enable_load_shedding ? (
+        <KPICard
+          label="Overloaded Slots"
+          value={metrics ? metrics.overloaded_transformer_slots : '—'}
+          unit="/ 48"
+          icon={AlertTriangle}
+          color={
+            metrics?.overloaded_transformer_slots > 0 ? '#F16C75' : '#43D9A3'
+          }
+          loading={loading && !simResult}
+          comparison={metrics?.overloaded_transformer_slots === 0 ? 'No transformer violations' : undefined}
+        />
+        {simResult?.scenario?.enable_load_shedding && (
           <KPICard
             label="Comfort Violations"
             value={metrics ? metrics.comfort_violations : '—'}
@@ -235,18 +246,6 @@ export default function NeighbourhoodPage() {
             color={metrics?.comfort_violations > 0 ? '#F4B860' : '#43D9A3'}
             loading={loading && !simResult}
             comparison="Appliances rejected to protect grid"
-          />
-        ) : (
-          <KPICard
-            label="Overloaded Slots"
-            value={metrics ? metrics.overloaded_transformer_slots : '—'}
-            unit="/ 48"
-            icon={AlertTriangle}
-            color={
-              metrics?.overloaded_transformer_slots > 0 ? '#F16C75' : '#43D9A3'
-            }
-            loading={loading && !simResult}
-            comparison={metrics?.overloaded_transformer_slots === 0 ? 'No transformer violations' : undefined}
           />
         )}
       </div>
