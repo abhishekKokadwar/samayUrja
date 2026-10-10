@@ -2,7 +2,7 @@
 
 from metrics import attach_comparisons
 from optimizer import _time_to_slot
-from simulator import ScenarioConfig, build_population, run_simulation
+from simulator import ScenarioConfig, build_population, hosting_capacity, run_simulation
 
 
 def test_ev_never_charges_before_it_is_plugged_in():
@@ -72,3 +72,13 @@ def test_decision_summary_counts_every_decision():
     assert s["total"] > len(r.decisions)  # the list is a sample, the summary is not
     assert s["fixed"] + s["moved"] + s["unchanged"] + s["unplaced"] == s["total"]
     assert s["unplaced"] == r.coordinated_metrics.infeasible_appliances == 0
+
+
+def test_flockshield_lets_the_same_transformers_host_more_evs():
+    h = hosting_capacity(ScenarioConfig())
+    assert h["ev_pct"] == list(range(0, 101, 10))
+    assert all(len(v) == 11 for v in h["utilization_pct"].values())
+    # The default scenario (30% EVs) already overloads today and is fine when coordinated.
+    assert h["max_ev_pct"]["unmanaged"] < 30 <= h["max_ev_pct"]["coordinated"]
+    # Optimizing alone overloads the transformers before any EV is added.
+    assert h["max_ev_pct"]["independent"] is None

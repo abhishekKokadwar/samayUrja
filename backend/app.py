@@ -39,7 +39,7 @@ from optimizer import (
     _time_to_slot,
     _slot_to_time,
 )
-from simulator import ScenarioConfig, run_simulation, _status_to_dict
+from simulator import ScenarioConfig, run_simulation, _status_to_dict, hosting_capacity
 from metrics import attach_comparisons
 
 # ---------------------------------------------------------------------------
@@ -426,6 +426,22 @@ def post_simulate(body: SimulateIn):
         computed_at=datetime.now(timezone.utc).isoformat(),
         elapsed_ms=round(elapsed, 1),
     )
+
+
+# The sweep reruns the simulation 11 times, so it is limited to what fits in
+# the API's 30 second limit.
+HOSTING_MAX_HOMES = 1000
+
+
+@app.post("/hosting-capacity")
+def post_hosting_capacity(body: SimulateIn):
+    """How much EV adoption the transformers can host under each strategy."""
+    if body.n_homes > HOSTING_MAX_HOMES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"EV hosting capacity is computed for up to {HOSTING_MAX_HOMES} homes.",
+        )
+    return hosting_capacity(ScenarioConfig(**body.model_dump()))
 
 
 @app.get("/health")

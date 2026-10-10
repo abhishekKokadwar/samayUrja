@@ -46,7 +46,7 @@ Resources:
       FunctionName: !Sub "murmuration-api-${Environment}"
       CodeUri: backend/
       Handler: app.handler
-      MemorySize: 512       # 512 MB for neighbourhood simulation
+      MemorySize: 1024      # more memory also means more CPU, which the EV sweep needs
       Timeout: 60           # 60s for large simulations
       Description: "Murmuration API — FastAPI via Mangum"
       Policies:

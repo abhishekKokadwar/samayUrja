@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import math
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Optional
 
 from tariffs import SLOTS, SLOT_H, get_tariff
@@ -572,6 +572,38 @@ def run_simulation(cfg: ScenarioConfig) -> SimulationResult:
         transformer_summary=transformer_summary,
         decision_summary=decision_summary,
     )
+
+
+# ---------------------------------------------------------------------------
+# EV hosting capacity
+# ---------------------------------------------------------------------------
+
+STRATEGIES = ("unmanaged", "independent", "coordinated")
+
+
+def hosting_capacity(cfg: ScenarioConfig, step_pct: int = 10) -> dict:
+    """
+    Rerun the scenario at every EV adoption level from 0% to 100% and report,
+    per strategy, the busiest transformer's load and the highest EV share the
+    transformers can host. A level counts as hosted when no transformer goes
+    above capacity and no appliance is left unscheduled, at that level and at
+    every level below it. max_ev_pct is None when even 0% EVs is too much.
+    """
+    levels = list(range(0, 101, step_pct))
+    utilization = {s: [] for s in STRATEGIES}
+    max_ev_pct = {s: None for s in STRATEGIES}
+    still_ok = {s: True for s in STRATEGIES}
+
+    for pct in levels:
+        r = run_simulation(replace(cfg, ev_adoption_rate=pct / 100))
+        for s in STRATEGIES:
+            m = getattr(r, f"{s}_metrics")
+            utilization[s].append(round(m.max_transformer_utilization_pct, 1))
+            still_ok[s] = still_ok[s] and m.overloaded_transformers == 0 and m.infeasible_appliances == 0
+            if still_ok[s]:
+                max_ev_pct[s] = pct
+
+    return {"ev_pct": levels, "utilization_pct": utilization, "max_ev_pct": max_ev_pct}
 
 
 def _status_to_dict(st: Optional[TransformerStatus]) -> dict:

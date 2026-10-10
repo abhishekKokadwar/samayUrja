@@ -31,5 +31,6 @@ export const api = {
   saveHousehold: (id, profile) => _request("PUT", `/households/${id}`, profile),
   loadHousehold: (id) => _request("GET", `/households/${id}`),
   simulate: (scenario) => _request("POST", "/simulate", scenario),
+  hostingCapacity: (scenario) => _request("POST", "/hosting-capacity", scenario),
   health: () => _request("GET", "/health"),
 };

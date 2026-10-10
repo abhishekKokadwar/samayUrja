@@ -16,6 +16,7 @@ import { AlertTriangle, Info, RefreshCw } from 'lucide-react'
 import { LoadCurveChart } from '../components/neighbourhood/LoadCurveChart.jsx'
 import { TransformerBars } from '../components/neighbourhood/TransformerBars.jsx'
 import { ComparisonTable } from '../components/neighbourhood/ComparisonTable.jsx'
+import { HostingCapacity } from '../components/neighbourhood/HostingCapacity.jsx'
 import {
   ScenarioControls, DEFAULT_SCENARIO, PRESETS, presetParams, activePresetId,
 } from '../components/neighbourhood/ScenarioControls.jsx'
@@ -307,6 +308,18 @@ export default function NeighbourhoodPage() {
           <p className="text-xs text-[#A3A3A3] mb-3">The busiest moment of each transformer, as a share of its capacity.</p>
           <TransformerBars transformerSummary={simResult?.transformer_summary} />
         </div>
+      </div>
+
+      {/* ── EV hosting capacity ──────────────────────────────────── */}
+      <div
+        className="rounded-xl p-4"
+        style={{ background: '#0A0A0A', border: '1px solid #1A1A1A' }}
+      >
+        <h2 className="text-base font-semibold text-[#FFFFFF]">How many EVs can these transformers take?</h2>
+        <p className="text-xs text-[#A3A3A3] mb-3">
+          The question a utility asks before it pays for a transformer upgrade.
+        </p>
+        <HostingCapacity params={params} />
       </div>
 
       {/* ── F. Advanced controls ─────────────────────────────────── */}

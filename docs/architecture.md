@@ -63,6 +63,7 @@ Base URL: output of `sam deploy` → `HttpApiUrl`. All bodies are JSON.
 | PUT | `/households/{id}` | Save profile to DynamoDB |
 | GET | `/households/{id}` | Load profile from DynamoDB |
 | POST | `/simulate` | Run three-strategy neighbourhood simulation |
+| POST | `/hosting-capacity` | Same request body as `/simulate`. Reruns the scenario at 0% to 100% EV adoption and returns the highest share the transformers can host under each strategy (up to 1,000 homes) |
 | GET | `/health` | Health check |
 
 ### POST /simulate request
@@ -177,7 +178,7 @@ samayUrja/
 │   ├── tariffs.json            Bundled illustrative tariff presets
 │   ├── requirements.txt
 │   └── tests/
-│       └── test_murmuration.py  44 of the 56 tests; five smaller files cover fairness, overload metrics and strict capacity
+│       └── test_murmuration.py  44 of the 58 tests; five smaller files cover fairness, overload metrics and strict capacity
 └── frontend/
     ├── package.json
     ├── vite.config.js

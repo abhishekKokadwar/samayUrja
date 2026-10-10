@@ -4,7 +4,7 @@
 
 > Environmental Hacks — Bharat Builds Tour, Event 02 | Track: Waste and Energy | Team: Hackit247
 
-[![Backend Tests](https://img.shields.io/badge/tests-56%20passed-43D9A3?style=flat)](#tests)
+[![Backend Tests](https://img.shields.io/badge/tests-58%20passed-43D9A3?style=flat)](#tests)
 [![Frontend Build](https://img.shields.io/badge/build-passing-43D9A3?style=flat)](#local-setup)
 [![AWS SAM](https://img.shields.io/badge/AWS-SAM-F4B860?style=flat)](#aws-deployment)
 
@@ -43,6 +43,7 @@ Unlike another individual bill calculator, Murmuration coordinates at the neighb
 - **Interactive load curve**: 48-slot demand chart showing all three strategies simultaneously
 - **Transformer map**: Schematic neighbourhood map with utilization status for each transformer
 - **FlockShield decision log**: Real scheduling decisions explaining every appliance movement
+- **EV hosting capacity**: Reruns the scenario at every EV adoption level and reports how many EV homes the same transformers can take under each strategy. In the default scenario that is 20% of homes today and 40% with FlockShield
 - **Scenario controls**: Adjust homes, EV adoption, AC rate, solar, tariff, and transformer capacity
 - **KPI metrics**: Peak demand, PAR, transformer utilization, cost savings, CO₂ avoided
 
@@ -156,7 +157,7 @@ cd backend
 python -m pytest tests/ -v
 ```
 
-**56 tests covering:**
+**58 tests covering:**
 - Tariff expansion into 48-slot price and carbon arrays
 - Correct kWh, INR, and carbon calculations
 - Overnight appliance windows
