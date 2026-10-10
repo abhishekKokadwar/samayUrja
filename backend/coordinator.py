@@ -136,23 +136,30 @@ def coordinate(
             transformer_load[t_idx][s] += homes_base_load[home_idx][s]
 
     all_decisions: list[CoordDecision] = []
-    home_results: list[CoordHomeResult] = []
+    # Initialize results structures
+    home_decisions: list[list[CoordDecision]] = [[] for _ in range(n_homes)]
+    home_infeasible_counts: list[int] = [0 for _ in range(n_homes)]
 
+    # Sort each home's appliances by energy (largest first)
     for home_idx in range(n_homes):
-        t_idx = homes_transformer_idx[home_idx]
-        transformer = transformers[t_idx]
-        sanctioned = homes_sanctioned_kw[home_idx]
-        decisions: list[CoordDecision] = []
-        infeasible_count = 0
-
-        # Sort appliances by energy (largest first) to maximise constraint coverage
-        apps = sorted(
+        homes_appliances[home_idx] = sorted(
             homes_appliances[home_idx],
             key=lambda a: a.power_kw * a.duration_slots,
             reverse=True,
         )
 
-        for app in apps:
+    max_apps = max((len(apps) for apps in homes_appliances), default=0)
+
+    # Round-robin scheduling: each home places their 1st largest appliance, then 2nd, etc.
+    for app_idx in range(max_apps):
+        for home_idx in range(n_homes):
+            if app_idx >= len(homes_appliances[home_idx]):
+                continue
+
+            app = homes_appliances[home_idx][app_idx]
+            t_idx = homes_transformer_idx[home_idx]
+            transformer = transformers[t_idx]
+            sanctioned = homes_sanctioned_kw[home_idx]
             n = app.duration_slots
 
             if not app.shiftable:
@@ -161,7 +168,7 @@ def coordinate(
                     s = (app.current_start_slot + i) % SLOTS
                     home_load[home_idx][s] += app.power_kw
                     transformer_load[t_idx][s] += app.power_kw
-                decisions.append(CoordDecision(
+                home_decisions[home_idx].append(CoordDecision(
                     home_id=home_idx,
                     appliance_name=app.name,
                     prev_slot=app.current_start_slot,
@@ -200,9 +207,9 @@ def coordinate(
                     reason = "Load Shed: Appliance rejected to prevent severe transformer overload."
                     constraint = "infeasible"
                     passed = False
-                    infeasible_count += 1
+                    home_infeasible_counts[home_idx] += 1
                     
-                    decisions.append(CoordDecision(
+                    home_decisions[home_idx].append(CoordDecision(
                         home_id=home_idx,
                         appliance_name=app.name,
                         prev_slot=app.current_start_slot,
@@ -223,7 +230,7 @@ def coordinate(
                 ]
                 if home_feasible:
                     # Place at slot that minimizes transformer overload, note transformer infeasibility
-                    def _fallback_score(start_s):
+                    def _fallback_score(start_s, t_idx=t_idx, n=n):
                         peak_load = max(transformer_load[t_idx][(start_s + i) % SLOTS] for i in range(n))
                         cost, _ = _slot_cost(start_s, n, price, carbon, app.power_kw)
                         return (peak_load, cost)
@@ -235,21 +242,21 @@ def coordinate(
                     )
                     constraint = "transformer_capacity"
                     passed = False
-                    infeasible_count += 1
+                    home_infeasible_counts[home_idx] += 1
                 else:
                     # Completely infeasible
                     best = app.current_start_slot
                     reason = "No feasible slot: sanctioned load and transformer constraints both violated."
                     constraint = "infeasible"
                     passed = False
-                    infeasible_count += 1
+                    home_infeasible_counts[home_idx] += 1
 
                 for i in range(n):
                     s = (best + i) % SLOTS
                     home_load[home_idx][s] += app.power_kw
                     transformer_load[t_idx][s] += app.power_kw
 
-                decisions.append(CoordDecision(
+                home_decisions[home_idx].append(CoordDecision(
                     home_id=home_idx,
                     appliance_name=app.name,
                     prev_slot=app.current_start_slot,
@@ -297,7 +304,7 @@ def coordinate(
                 home_load[home_idx][s] += app.power_kw
                 transformer_load[t_idx][s] += app.power_kw
 
-            decisions.append(CoordDecision(
+            home_decisions[home_idx].append(CoordDecision(
                 home_id=home_idx,
                 appliance_name=app.name,
                 prev_slot=app.current_start_slot,
@@ -307,14 +314,17 @@ def coordinate(
                 passed_validation=True,
             ))
 
+    home_results: list[CoordHomeResult] = []
+    for home_idx in range(n_homes):
+        t_idx = homes_transformer_idx[home_idx]
         home_results.append(CoordHomeResult(
             home_id=home_idx,
-            transformer_id=transformer.id,
+            transformer_id=transformers[t_idx].id,
             demand_slots=home_load[home_idx],
-            decisions=decisions,
-            infeasible_appliances=infeasible_count,
+            decisions=home_decisions[home_idx],
+            infeasible_appliances=home_infeasible_counts[home_idx],
         ))
-        all_decisions.extend(decisions)
+        all_decisions.extend(home_decisions[home_idx])
 
     return home_results, all_decisions
 

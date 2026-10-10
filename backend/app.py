@@ -196,6 +196,12 @@ class StrategyMetricsOut(BaseModel):
     n_homes: int
     infeasible_appliances: int
     comfort_violations: int
+    losers_vs_unmanaged: int
+    losers_vs_unmanaged_pct: float
+    max_cost_increase_vs_unmanaged_inr: float
+    losers_vs_independent: int
+    losers_vs_independent_pct: float
+    max_cost_increase_vs_independent_inr: float
 
 
 class DecisionOut(BaseModel):
@@ -354,9 +360,9 @@ def post_simulate(body: SimulateIn):
 
     sim = run_simulation(cfg)
 
-    # Attach comparisons vs unmanaged
+    # Attach comparisons vs unmanaged and independent
     attach_comparisons(sim.unmanaged_metrics, sim.independent_metrics)
-    attach_comparisons(sim.unmanaged_metrics, sim.coordinated_metrics)
+    attach_comparisons(sim.unmanaged_metrics, sim.coordinated_metrics, independent=sim.independent_metrics)
 
     elapsed = (time.time() - start) * 1000
 
@@ -379,6 +385,12 @@ def post_simulate(body: SimulateIn):
             n_homes=m.n_homes,
             infeasible_appliances=m.infeasible_appliances,
             comfort_violations=m.comfort_violations,
+            losers_vs_unmanaged=m.losers_vs_unmanaged,
+            losers_vs_unmanaged_pct=m.losers_vs_unmanaged_pct,
+            max_cost_increase_vs_unmanaged_inr=m.max_cost_increase_vs_unmanaged_inr,
+            losers_vs_independent=m.losers_vs_independent,
+            losers_vs_independent_pct=m.losers_vs_independent_pct,
+            max_cost_increase_vs_independent_inr=m.max_cost_increase_vs_independent_inr,
         )
 
     return SimulateResponse(

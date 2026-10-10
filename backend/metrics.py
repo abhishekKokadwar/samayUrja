@@ -14,7 +14,7 @@ UNITS:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from tariffs import SLOTS, SLOT_H
@@ -60,6 +60,14 @@ class StrategyMetrics:
     n_appliances_shifted: int = 0
     infeasible_appliances: int = 0
     comfort_violations: int = 0
+
+    per_home_costs_inr: list[float] = field(default_factory=list)
+    losers_vs_unmanaged: int = 0
+    losers_vs_unmanaged_pct: float = 0.0
+    max_cost_increase_vs_unmanaged_inr: float = 0.0
+    losers_vs_independent: int = 0
+    losers_vs_independent_pct: float = 0.0
+    max_cost_increase_vs_independent_inr: float = 0.0
 
 
 def compute_metrics(
@@ -117,6 +125,12 @@ def compute_metrics(
         for s in range(SLOTS)
     )
 
+    # Per-home costs
+    per_home_costs_inr = [
+        round(sum(demand_slots[s] * SLOT_H * price[s] for s in range(SLOTS)), 2)
+        for demand_slots in demand_by_home
+    ]
+
     return StrategyMetrics(
         strategy=strategy,
         peak_demand_kw=round(peak, 2),
@@ -136,12 +150,14 @@ def compute_metrics(
         n_homes=len(homes),
         infeasible_appliances=infeasible_appliances,
         comfort_violations=comfort_violations,
+        per_home_costs_inr=per_home_costs_inr,
     )
 
 
 def attach_comparisons(
     baseline: StrategyMetrics,
     other: StrategyMetrics,
+    independent: StrategyMetrics = None,
 ) -> StrategyMetrics:
     """Fill in savings/reduction fields vs a baseline strategy."""
     other.savings_vs_unmanaged_inr = round(
@@ -153,4 +169,21 @@ def attach_comparisons(
     other.peak_reduction_kw = round(
         baseline.peak_demand_kw - other.peak_demand_kw, 2
     )
+    
+    # Calculate fairness against Unmanaged
+    if other.per_home_costs_inr and baseline.per_home_costs_inr:
+        increases = [other.per_home_costs_inr[i] - baseline.per_home_costs_inr[i] for i in range(len(other.per_home_costs_inr))]
+        losers = [inc for inc in increases if inc > 1e-4]
+        other.losers_vs_unmanaged = len(losers)
+        other.losers_vs_unmanaged_pct = round((len(losers) / other.n_homes) * 100, 1) if other.n_homes > 0 else 0.0
+        other.max_cost_increase_vs_unmanaged_inr = round(max(losers) if losers else 0.0, 2)
+        
+    # Calculate fairness against Independent
+    if independent and other.per_home_costs_inr and independent.per_home_costs_inr:
+        increases = [other.per_home_costs_inr[i] - independent.per_home_costs_inr[i] for i in range(len(other.per_home_costs_inr))]
+        losers = [inc for inc in increases if inc > 1e-4]
+        other.losers_vs_independent = len(losers)
+        other.losers_vs_independent_pct = round((len(losers) / other.n_homes) * 100, 1) if other.n_homes > 0 else 0.0
+        other.max_cost_increase_vs_independent_inr = round(max(losers) if losers else 0.0, 2)
+        
     return other
