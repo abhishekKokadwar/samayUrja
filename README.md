@@ -126,7 +126,7 @@ flowchart TB
 
 ```bash
 cd backend
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 # Start the API server (no Docker needed)
 uvicorn app:app --reload --port 8000
@@ -269,6 +269,7 @@ All simulation data is **synthetic and illustrative**.
 | Assumption | Value |
 |---|---|
 | Time resolution | 48 half-hour slots per day |
+| Simulated day | A day on which every appliance runs. Days-per-week settings apply to the household page only |
 | Base load model | Simple demand curve (0.2–0.5 kW, varies by hour) |
 | EV charger | 3.3 kW, 4-hour charge, plug-in after 18:00 |
 | Geyser | 25-litre, 2 kW. May heat earlier than usual but never later; a first-order thermal model checks the water is hot at the usual time |

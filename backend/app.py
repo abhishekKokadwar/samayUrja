@@ -65,6 +65,9 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
+# Saved profiles expire after this many days.
+PROFILE_TTL_DAYS = 90
+
 # DynamoDB
 _TABLE_NAME = os.environ.get("HOUSEHOLDS_TABLE", "murmuration-households")
 _dynamodb = None
@@ -323,6 +326,8 @@ def put_household(
             # DynamoDB rejects Python floats, so numbers are stored as Decimal.
             "profile": json.loads(profile.model_dump_json(), parse_float=Decimal),
             "updated_at": datetime.now(timezone.utc).isoformat(),
+            # DynamoDB deletes the profile after this time (table TTL attribute).
+            "ttl": int(time.time()) + PROFILE_TTL_DAYS * 86400,
         })
     except (ClientError, BotoCoreError) as e:
         msg = e.response["Error"]["Code"] if isinstance(e, ClientError) else str(e)

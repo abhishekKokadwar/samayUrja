@@ -52,10 +52,14 @@ from transformer import (
     TransformerStatus,
 )
 from metrics import compute_metrics, StrategyMetrics
-from appliance_models import GeyserSpec, geyser_comfort_satisfied
+from appliance_models import EVChargerSpec, GeyserSpec, ev_feasible, geyser_comfort_satisfied
 
 # Rooftop system size for homes flagged as having solar.
 SOLAR_KWP = 2.0
+
+# Energy an EV needs each night, and the time it must be ready by.
+EV_DAILY_KWH = 13.2
+EV_READY_BY = "07:00"
 
 
 # ---------------------------------------------------------------------------
@@ -191,14 +195,21 @@ def _build_appliances(
         # The car is away during the day. It can only charge from the time it is
         # plugged in after returning home until it is needed the next morning.
         ev_start_h = rng.choice([18, 19, 20, 21])
+        ev = EVChargerSpec(
+            power_kw=3.3,
+            required_energy_kwh=EV_DAILY_KWH,
+            earliest_start_slot=ev_start_h * 2,
+            deadline_slot=_time_to_slot(EV_READY_BY),
+        )
+        assert ev_feasible(ev), "EV cannot finish charging between plug-in and morning"
         apps.append(ApplianceInput(
             name="EV charger",
-            power_kw=3.3,
-            duration_min=240,
+            power_kw=ev.power_kw,
+            duration_min=ev.required_slots * 30,
             days_per_week=rng.randint(5, 7),
             current_start=f"{ev_start_h:02d}:00",
             earliest_start=f"{ev_start_h:02d}:00",
-            latest_end="07:00",  # overnight window, wraps past midnight
+            latest_end=EV_READY_BY,  # overnight window, wraps past midnight
         ))
 
     # Water pump

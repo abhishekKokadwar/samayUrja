@@ -220,7 +220,7 @@ samayUrja/
 ```bash
 # Backend
 cd backend
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 uvicorn app:app --reload --port 8000
 
 # Backend tests

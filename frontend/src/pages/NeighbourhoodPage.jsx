@@ -333,6 +333,7 @@ export default function NeighbourhoodPage() {
         <Info size={11} className="flex-shrink-0 mt-0.5" />
         <p>
           <strong className="text-[#FFFFFF]">Disclaimer:</strong> All results are synthetic simulations.
+          The simulated day is one on which every appliance runs, so it is a busy day, not an average one.
           Tariffs are illustrative (not real DISCOM tariffs). Carbon estimates use the CEA CO₂ Baseline Database as
           an approximation. FlockShield demonstrates capacity-constrained scheduling, not certified grid protection.
           Shifting load does not reduce total energy consumed — savings arise from tariff band changes only.

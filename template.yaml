@@ -33,6 +33,10 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
+      # Caps what an anonymous caller can spend: 10 requests a second, bursts of 20.
+      DefaultRouteSettings:
+        ThrottlingRateLimit: 10
+        ThrottlingBurstLimit: 20
       # CORS is answered by FastAPI (backend/app.py), which already allows any
       # *.amplifyapp.com origin. Configuring it here as well would override that.
 
@@ -46,8 +50,13 @@ Resources:
       Timeout: 60           # 60s for large simulations
       Description: "Murmuration API — FastAPI via Mangum"
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref HouseholdsTable
+        # Least privilege: the API only reads and writes single profiles.
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+              Resource: !GetAtt HouseholdsTable.Arn
       Events:
         ApiRoot:
           Type: HttpApi
