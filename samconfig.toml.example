@@ -1,0 +1,12 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "murmuration"
+s3_bucket = ""           # SAM will create a bucket automatically on first deploy
+s3_prefix = "murmuration"
+region = "ap-south-1"   # Mumbai — closest to Indian users
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod"
+confirm_changeset = true

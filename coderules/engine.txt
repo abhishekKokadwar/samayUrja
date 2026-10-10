@@ -1,0 +1,651 @@
+# Build Murmuration — Coordinated Neighbourhood Energy Intelligence
+
+You are a senior full-stack engineer, energy systems engineer, AWS architect, optimization specialist, and product designer. You have access to my existing project repository and must implement the application directly in the current working directory.
+
+Your job is to turn the existing SamayUrja project proposal into a working, polished, deployable hackathon project named **Murmuration**.
+
+Do not merely give me instructions, pseudocode, architecture suggestions, or isolated code snippets. Inspect the repository, create and modify the necessary files, implement the application, run tests, fix errors, and leave the project in a state where I can run it locally and deploy it to AWS.
+
+If terminal and file-editing tools are available, use them to make the changes directly.
+
+---
+
+# 1. PROJECT IDENTITY
+
+**Product:** Murmuration  
+**Tagline:** Many homes. One intelligent grid.  
+**Core engine:** FlockShield  
+**Simulation environment:** Murmuration GridLab  
+**Hackathon:** Environmental Hacks — Bharat Builds Tour, Event 02  
+**Track:** Waste and Energy  
+**Team:** Hackit247
+
+Product description:
+
+Murmuration is an intelligent neighbourhood energy coordination platform that prevents electricity demand rebound peaks by coordinating flexible appliance schedules across multiple households.
+
+Independent electricity optimizers can make thousands of households shift consumption to the same cheap tariff period. This creates a new demand spike and can overload local transformers.
+
+Murmuration solves this coordination problem by simulating neighbourhood demand, scheduling flexible household loads around shared transformer capacities, preserving household constraints, and measuring the resulting financial and environmental impact.
+
+FlockShield is the capacity-aware coordination and validation engine. Murmuration GridLab is the interactive digital twin used to demonstrate its effectiveness.
+
+The central innovation is coordinated energy optimization across households, not another individual electricity bill calculator.
+
+# 2. INSPECT THE EXISTING REPOSITORY FIRST
+
+The current project directory is named `samayUrja`.
+
+It already contains:
+
+- `docs/architecture.md`
+- `docs/design.md`
+- `docs/phases.md`
+- `docs/SRS.md`
+
+Read all four documents before writing code.
+
+Treat them as the original product specification. Preserve useful existing decisions, but update the documentation and implementation to reflect Murmuration and FlockShield.
+
+The original proposal uses:
+
+- React, Vite, Tailwind CSS, and Recharts.
+- Python 3.12, FastAPI, and Mangum.
+- AWS Lambda and API Gateway HTTP API.
+- DynamoDB for saved household profiles.
+- AWS SAM for infrastructure as code.
+- AWS Amplify Hosting for the frontend.
+- `optimizer.py` for independent household optimization.
+- `tariffs.json` for illustrative electricity tariffs.
+
+Preserve this stack for the initial implementation. Do not rewrite the backend in Go or introduce unnecessary services.
+
+The original greedy optimizer should remain available as the independent-optimization baseline.
+
+Before modifying anything, inspect the repository, identify what already exists, and reuse working components. Do not overwrite existing working files blindly.
+
+If a critical decision is missing, make a reasonable assumption, document it, and continue instead of stopping to ask questions.
+
+# 3. REQUIRED PRODUCT EXPERIENCE
+
+Build a polished, responsive web application with two main views.
+
+## A. Household view
+
+Preserve the original SamayUrja household optimizer as a useful standalone feature.
+
+Users must be able to:
+
+- Select an illustrative electricity tariff.
+- Enter sanctioned household load.
+- Add, edit, and remove appliances.
+- Use quick-add appliance templates.
+- Set power rating, duration, days per week, usual start time, allowed start window, and completion deadline where applicable.
+- Optimize the household's appliance schedule.
+- View current versus optimized costs and estimated carbon emissions.
+- See individual appliance movements and their explanations.
+- View a weekly schedule grid.
+- Save and reload a household profile using a shareable URL.
+
+Provide templates for:
+
+- EV charger
+- Geyser / water heater
+- Air conditioner
+- Washing machine
+- Dishwasher
+- Water pump
+
+Use sensible, configurable sample values. Clearly distinguish assumed values from measured data.
+
+## B. Neighbourhood view — the flagship feature
+
+This is the most important part of the application.
+
+Create an interactive neighbourhood digital twin that simulates multiple households connected to shared distribution transformers.
+
+The initial default scenario should use approximately 1,000 synthetic homes and 25 transformers. The architecture should support testing up to 10,000 homes.
+
+The interface should contain:
+
+1. A neighbourhood map or grid-based visual representation of homes and transformers.
+2. Transformer utilization indicators with capacity thresholds.
+3. A live or simulated load-curve chart.
+4. A strategy selector for three scheduling strategies.
+5. Scenario controls for demand, EV adoption, AC usage, and solar generation.
+6. Household savings and carbon impact metrics.
+7. A list of scheduling decisions with explanations.
+8. A scenario reset control.
+9. A clear distinction between simulated data and real-world measurements.
+
+Use a deterministic synthetic population so identical scenario settings produce reproducible results.
+
+Do not require access to actual smart meters, live DISCOM APIs, or physical IoT devices.
+
+The map can be an interactive, schematic neighbourhood rather than a geographically accurate map. Clearly represent which homes belong to each transformer.
+
+# 4. THREE COMPARISON STRATEGIES
+
+Implement three genuinely different strategies using the same synthetic population and input conditions.
+
+## Strategy A: Unmanaged baseline
+
+- Use the household's original appliance start times.
+- Respect each appliance's physical run duration.
+- Calculate total demand at each time slot.
+- Report transformer overloads when the original demand exceeds capacity.
+
+## Strategy B: Independent optimization
+
+- Optimize each household without knowing its neighbours' schedules.
+- Use the original independent optimizer or a corrected equivalent.
+- Allow many homes to select the same cheap tariff period.
+- Demonstrate how independently optimized demand can create a rebound peak.
+
+Do not artificially force this strategy to fail. Configure a scenario in which synchronized starts naturally emerge from the tariff and appliance windows.
+
+## Strategy C: FlockShield coordination
+
+- Coordinate appliance scheduling across households.
+- Consider shared transformer capacity when assigning time slots.
+- Prefer cheaper and cleaner periods when feasible.
+- Spread flexible loads across available capacity instead of synchronizing them.
+- Respect household load limits, appliance deadlines, and comfort constraints.
+- Recalculate costs and carbon emissions from the final schedule.
+
+Use a deterministic, capacity-aware heuristic suitable for the hackathon timeline. A practical implementation can use congestion penalties, ranked scheduling, candidate time-slot evaluation, and local rescheduling.
+
+You do not need a complex distributed consensus protocol for the MVP. Implement the coordinated behavior correctly first and keep the coordination engine isolated behind a clean interface.
+
+Never claim global optimality unless it has actually been established.
+
+# 5. FLOCKSHIELD SAFETY ENGINE
+
+Implement FlockShield as a separate, testable module.
+
+Each home belongs to a transformer. Each transformer has a configured usable capacity in kW.
+
+For every transformer and every simulation time slot, verify:
+
+sum of the aggregate demand of all connected homes <= transformer capacity
+
+Also enforce:
+
+- Each household's sanctioned-load limit.
+- Appliance start windows and completion deadlines.
+- Correct appliance run durations.
+- Non-overlapping or overlapping appliance behavior as explicitly permitted by the profile and load limits.
+- Geyser temperature constraints.
+- AC comfort limits.
+- Existing fixed loads that cannot be shifted.
+
+For the initial MVP, use 48 half-hour slots per day.
+
+Treat power ratings in kW, slot durations in hours, energy in kWh, tariffs in INR/kWh, and emissions in kg CO2/kWh.
+
+Do not confuse power with energy.
+
+A transformer capacity check must include all connected homes and all active appliances in each slot. Checking each home independently is insufficient.
+
+Add a final schedule validator after coordination.
+
+If a valid schedule cannot be found, report the infeasibility and identify the conflicting constraints. Do not silently claim safety.
+
+Important physical limitation: software scheduling cannot guarantee the safety of a real electrical grid in every circumstance. The project demonstrates simulated, capacity-constrained scheduling, not certified grid protection.
+
+# 6. APPLIANCE AND THERMAL MODELS
+
+Implement simple, documented models rather than unnecessary machine learning.
+
+## EV charger
+
+- Configurable charging power.
+- Required charging duration or energy.
+- Earliest start and completion deadline.
+- Charging can be shifted within the allowed window.
+
+## Geyser
+
+- Thermal state represented by water temperature.
+- Ambient heat loss and heating input.
+- Minimum required water temperature at the specified deadline.
+- Configurable upper temperature limit.
+
+## Air conditioner
+
+- Simplified room thermal model.
+- Ambient temperature and thermal response.
+- AC power consumption.
+- Minimum and maximum permitted indoor temperature.
+
+Keep these models deterministic and fast.
+
+If the thermal model is simplified, disclose its assumptions in the documentation and UI.
+
+Do not use a fake temperature model merely to produce attractive metrics. Every displayed comfort result must come from the implemented model.
+
+# 7. METRICS AND EXPERIMENTS
+
+Calculate metrics from the actual schedules and simulation output.
+
+Required metrics:
+
+- Peak neighbourhood demand in kW.
+- Average neighbourhood demand in kW.
+- Peak-to-average demand ratio.
+- Maximum transformer utilization.
+- Number of overloaded transformer slots.
+- Total overload duration.
+- Total household energy consumption in kWh.
+- Household electricity cost before and after scheduling.
+- Household savings in INR.
+- Estimated carbon emissions before and after scheduling.
+- Estimated carbon avoided in kg CO2.
+- Number of appliances shifted.
+- Number of households receiving a beneficial schedule.
+- Number of infeasible appliance requests.
+- Household comfort violations.
+
+Use consistent units and clearly documented calculation methods.
+
+Use the same underlying appliance population, tariff, and scenario conditions when comparing strategies.
+
+Distinguish energy shifting from genuine energy reduction. Shifting a load to midday does not automatically reduce total kWh consumed.
+
+Do not claim carbon reductions unless the implemented carbon-intensity model supports that conclusion.
+
+Do not hard-code successful results or predetermined improvement percentages.
+
+Clearly label all synthetic data, illustrative tariffs, and modeled emissions factors in the interface.
+
+Add a reproducible scenario that demonstrates the rebound peak, but do not manipulate metrics or fabricate measurements to guarantee a particular result.
+
+# 8. FRONTEND DESIGN
+
+Build a professional, distinctive energy intelligence dashboard.
+
+The visual identity should feel like a modern climate-tech and grid-intelligence product rather than a generic admin template.
+
+Suggested design direction:
+
+- Deep navy or near-black background for the main dashboard.
+- Dark slate panels with subtle borders.
+- Emerald or mint green as the primary accent.
+- Amber for warnings and high utilization.
+- Red for actual capacity violations.
+- Cyan or blue for neutral grid information.
+- Large, legible KPI values.
+- Clean typography, generous spacing, and rounded cards.
+- Subtle animations for changing transformer status and load curves.
+- Responsive layout for desktop and mobile.
+- Accessible contrast, keyboard navigation, and textual status labels.
+
+Avoid excessive gradients, giant headings, unnecessary glass effects, and decorative elements that compete with the data.
+
+## Header
+
+Display:
+
+Murmuration
+
+Tagline: Many homes. One intelligent grid.
+
+Provide navigation between Household and Neighbourhood views.
+
+Display a clear indication that the application is running on synthetic simulation data.
+
+## Neighbourhood dashboard
+
+Include these cards:
+
+1. Peak Demand
+2. Peak-to-Average Ratio
+3. Maximum Transformer Utilization
+4. Estimated Household Savings
+5. Estimated CO2 Avoided
+6. Overloaded Transformer Slots
+
+Show the load curve with three comparable series: unmanaged, independent optimization, and FlockShield.
+
+Use Recharts or another existing lightweight chart implementation.
+
+Make the selected strategy visually clear.
+
+The transformer map should use meaningful status colors and readable utilization labels. Do not use color alone to communicate status.
+
+Add an event or decision log showing entries such as:
+
+"Home 184: EV charging moved from 22:00 to 21:00 because the preferred slot exceeded the transformer's remaining capacity."
+
+Only display reasons that can be derived from the actual scheduler output.
+
+## Scenario controls
+
+Provide adjustable controls for:
+
+- Number of homes.
+- Number of transformers or transformer capacity.
+- EV adoption rate.
+- AC adoption rate.
+- Geyser adoption rate.
+- Rooftop solar availability.
+- Tariff configuration.
+- Scheduling strategy.
+
+Use valid ranges and clear labels.
+
+When a scenario changes, update the simulation results. If computation is in progress, show a loading state and keep the previous valid results visible.
+
+Use debouncing only where it improves usability.
+
+## Household dashboard
+
+Preserve the original appliance editor, weekly schedule, change list, cost chart, and carbon summary.
+
+The household optimizer must remain functional after the neighbourhood functionality is added.
+
+# 9. BACKEND AND API
+
+Keep Python 3.12, FastAPI, Mangum, API Gateway HTTP API, and AWS Lambda.
+
+Preserve these existing endpoints:
+
+GET /tariffs
+
+POST /optimize
+
+PUT /households/{id}
+
+GET /households/{id}
+
+Add:
+
+POST /simulate
+
+This endpoint should accept a validated neighbourhood scenario and return:
+
+- Baseline metrics.
+- Independent optimization metrics.
+- FlockShield metrics.
+- Time-series demand data.
+- Transformer utilization data.
+- Household aggregate results.
+- Scheduling decisions and explanations.
+- Constraint-validation results.
+- Scenario metadata.
+
+Design the response schema explicitly with Pydantic models.
+
+Validate inputs and enforce reasonable limits.
+
+The service must never trust client-provided calculated savings or validation results. Compute them on the server.
+
+For a deterministic simulation, the same input and simulation version should produce the same results.
+
+Avoid creating a DynamoDB item for every simulated home. Generate synthetic homes in memory. Persist only household profiles and, if genuinely needed, a small number of saved scenario configurations.
+
+For a 10,000-home scenario, benchmark actual runtime and memory use. Optimize the simulation before claiming support for that scale.
+
+If Lambda execution limits become an issue, support a smaller live scenario and an explicitly labelled precomputed benchmark for larger scenarios. Never label precomputed results as a live computation.
+
+# 10. AWS AND INFRASTRUCTURE
+
+Preserve the existing AWS deployment plan:
+
+- AWS Amplify Hosting for React.
+- API Gateway HTTP API.
+- Lambda running FastAPI through Mangum.
+- DynamoDB for household profile persistence.
+- AWS SAM for infrastructure as code.
+
+Update `template.yaml` as necessary.
+
+Use least-privilege IAM permissions.
+
+Configure CORS for the deployed frontend origin.
+
+Do not expose AWS credentials, API keys, or secrets in the frontend or repository.
+
+Provide environment variable examples without actual secrets.
+
+Add suitable timeouts and memory configuration for the simulation, based on measured requirements.
+
+Keep costs controlled and avoid creating continuously running resources unnecessarily.
+
+Do not add Amazon Bedrock, Strands Agents, Cognito, SQS, Step Functions, or other services unless they solve a demonstrated need and the MVP is already working.
+
+Use AWS meaningfully, not merely as a badge.
+
+# 11. SECURITY AND PRIVACY
+
+The project must not collect names, addresses, phone numbers, or actual electricity meter identifiers.
+
+Household IDs must be UUIDs and validated server-side.
+
+The original UUID-in-the-URL mechanism is not authentication. Anyone who obtains a household URL may be able to access its profile if the API allows it. Document this limitation and avoid storing sensitive information.
+
+Restrict DynamoDB access to the required table and operations.
+
+Validate all API request sizes, array lengths, numerical ranges, time windows, and tariff identifiers.
+
+Prevent malformed input from causing unbounded simulation work.
+
+Do not include personal data in generated sample populations.
+
+# 12. TESTING REQUIREMENTS
+
+Write and run meaningful automated tests.
+
+At minimum, cover:
+
+1. Tariff expansion into 48 half-hour price and carbon values.
+2. Correct kWh, INR, and carbon calculations.
+3. Overnight appliance windows.
+4. Appliances that cannot be moved.
+5. Household sanctioned-load constraints.
+6. Transformer aggregate capacity constraints.
+7. Deadline and run-duration constraints.
+8. Geyser temperature constraints.
+9. AC comfort constraints.
+10. Infeasible scheduling cases.
+11. Deterministic results for identical scenarios.
+12. Independent optimization causing a rebound peak in the intended test scenario.
+13. FlockShield reducing that rebound peak in the same scenario, when a feasible coordinated schedule exists.
+14. API request validation and error responses.
+15. Existing household optimizer regression tests.
+16. Performance on progressively larger synthetic populations.
+
+Use property-based testing with Hypothesis if it can be integrated without excessive setup. Otherwise, use deterministic randomized tests.
+
+A successful test suite is not proof of every possible physical grid guarantee. Document the actual invariant and its scope.
+
+Do not delete or weaken tests to make the suite pass.
+
+# 13. DOCUMENTATION TO UPDATE
+
+Update the existing documentation files:
+
+`docs/architecture.md`
+
+Document the final architecture, component responsibilities, AWS deployment, data flow, and API contracts.
+
+`docs/design.md`
+
+Document the baseline optimizer, coordination algorithm, transformer capacity constraints, appliance models, units, metrics, and known limitations.
+
+`docs/phases.md`
+
+Replace the old household-only implementation plan with the actual project milestones, team responsibilities, and working acceptance checks.
+
+`docs/SRS.md`
+
+Update the project identity, objectives, requirements, constraints, acceptance criteria, and out-of-scope features.
+
+Also create or update:
+
+`README.md`
+
+Include:
+
+- Project overview.
+- Rebound-peak problem.
+- Features.
+- Screenshots section with placeholders until actual screenshots are captured.
+- Architecture diagram in Mermaid.
+- Tech stack.
+- Local setup.
+- Tests.
+- AWS deployment instructions.
+- Environment variables.
+- Simulation assumptions.
+- Limitations and safety caveats.
+- Example API requests.
+- Team and hackathon information.
+
+Keep all documentation consistent with the actual implementation. Do not document features that do not exist.
+
+# 14. REPOSITORY STRUCTURE
+
+Use this as a target, adapting it to the existing repository when appropriate:
+
+samayUrja/
+├── README.md
+├── template.yaml
+├── samconfig.toml.example
+├── .gitignore
+├── .env.example
+├── docs/
+│   ├── architecture.md
+│   ├── design.md
+│   ├── phases.md
+│   └── SRS.md
+├── backend/
+│   ├── app.py
+│   ├── optimizer.py
+│   ├── coordinator.py
+│   ├── simulator.py
+│   ├── transformer.py
+│   ├── appliance_models.py
+│   ├── metrics.py
+│   ├── tariffs.json
+│   ├── requirements.txt
+│   └── tests/
+├── frontend/
+│   ├── package.json
+│   ├── index.html
+│   ├── vite.config.js
+│   └── src/
+│       ├── App.jsx
+│       ├── api.js
+│       ├── components/
+│       ├── pages/
+│       └── styles/
+└── events/ or scripts/ if needed
+
+Do not create duplicate implementations or redundant abstractions simply to match this exact tree.
+
+# 15. ACCEPTANCE CRITERIA
+
+The project is not finished until these conditions are met:
+
+A. The React frontend runs locally.
+
+B. The FastAPI backend starts locally.
+
+C. The household optimizer still works.
+
+D. The neighbourhood simulator produces actual calculated results for all three strategies.
+
+E. The same scenario is used for fair comparison between strategies.
+
+F. The rebound peak is demonstrated by a reproducible scenario rather than fabricated metrics.
+
+G. FlockShield validates shared transformer capacities and reports infeasible cases honestly.
+
+H. Appliance constraints and thermal comfort requirements are represented and tested.
+
+I. The frontend visualizes the actual backend results.
+
+J. Loading, validation, and API error states work.
+
+K. Household profiles can be saved and retrieved when DynamoDB is configured.
+
+L. Automated tests pass.
+
+M. The AWS SAM template is valid and the application is structured for deployment.
+
+N. The application supports a responsive mobile layout.
+
+O. All simulated metrics are labelled honestly.
+
+P. The README and technical documentation reflect the code.
+
+# 16. IMPLEMENTATION WORKFLOW
+
+Follow this workflow strictly.
+
+**Step 1 — Inspect**
+
+Read all current source files, docs, package manifests, and infrastructure definitions. Determine what already works.
+
+**Step 2 — Plan internally**
+
+Establish a short implementation checklist and identify dependencies. Do not stop after producing a plan.
+
+**Step 3 — Implement the core**
+
+First make the simulator, coordination engine, metrics, and safety validation work. Test them before spending time on animations or styling.
+
+**Step 4 — Integrate the API**
+
+Connect the new simulator to FastAPI while preserving the existing household endpoints.
+
+**Step 5 — Build the frontend**
+
+Implement the neighbourhood dashboard and retain the household optimizer.
+
+**Step 6 — Validate**
+
+Run backend tests, frontend build, and available lint/type checks. Fix errors rather than merely reporting them.
+
+**Step 7 — Validate infrastructure**
+
+Check the SAM template and ensure that the frontend environment configuration and backend deployment configuration agree.
+
+Do not claim an AWS deployment succeeded unless you actually performed and verified it. If credentials or permissions are unavailable, finish local implementation and provide the exact deployment commands.
+
+**Step 8 — Final report**
+
+Tell me:
+
+- What files you created.
+- What existing files you modified.
+- Which features work.
+- Which tests and builds passed.
+- The exact commands to run the project.
+- Any deployment steps I must perform myself.
+- Any remaining limitations.
+
+# 17. PRIORITIES AND TRADE-OFFS
+
+Prioritize in this order:
+
+1. Correct, tested neighbourhood coordination.
+2. Honest metrics and transformer safety validation.
+3. A functional, visually polished neighbourhood dashboard.
+4. A working household optimizer.
+5. AWS deployment readiness.
+6. Documentation and demo readiness.
+7. Optional enhancements.
+
+Do not implement NILM, real smart-plug control, peer-to-peer electricity trading, virtual power plant bidding, or advanced AI explanations during the initial build.
+
+Do not introduce a Go backend rewrite, unnecessary microservices, complex distributed consensus, or heavyweight optimization dependencies without a demonstrated need.
+
+Do not spend hours polishing a UI that displays fake data while the coordination engine is unfinished.
+
+Do not leave critical files as TODOs, placeholders, pseudocode, or unimplemented stubs.
+
+If you must simplify, simplify the scope while preserving the central innovation: coordinated neighbourhood scheduling under shared transformer constraints.
+
+**Begin by inspecting the current repository, then implement the application directly. Do not respond with another proposal instead of writing the code.**

@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  Murmuration — Coordinated Neighbourhood Energy Intelligence
+  FlockShield coordination engine + household optimizer
+  Team: Hackit247 | Environmental Hacks Bharat Builds Tour Event 02
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [x86_64]
+    Environment:
+      Variables:
+        HOUSEHOLDS_TABLE: !Ref HouseholdsTable
+        CORS_ORIGINS: !Sub "https://${AmplifyApp}.amplifyapp.com,http://localhost:5173"
+    Tracing: Active
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+    Description: Deployment environment
+  AmplifyApp:
+    Type: String
+    Default: "PLACEHOLDER"
+    Description: Amplify app ID (update after first deploy)
+
+Resources:
+  # ── API + Lambda ──────────────────────────────────────────────────────────
+
+  MurmurationApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowOrigins:
+          - !Sub "https://${AmplifyApp}.amplifyapp.com"
+          - "http://localhost:5173"
+          - "http://localhost:3000"
+        AllowMethods: [GET, POST, PUT, OPTIONS]
+        AllowHeaders: [Content-Type, Authorization]
+        MaxAge: 300
+
+  MurmurationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "murmuration-api-${Environment}"
+      CodeUri: backend/
+      Handler: app.handler
+      MemorySize: 512       # 512 MB for neighbourhood simulation
+      Timeout: 60           # 60s for large simulations
+      Description: "Murmuration API — FastAPI via Mangum"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HouseholdsTable
+      Events:
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MurmurationApi
+            Path: /{proxy+}
+            Method: ANY
+        ApiHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MurmurationApi
+            Path: /health
+            Method: GET
+
+  # ── DynamoDB ──────────────────────────────────────────────────────────────
+
+  HouseholdsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain      # Do not delete household profiles on stack deletion
+    Properties:
+      TableName: !Sub "murmuration-households-${Environment}"
+      BillingMode: PAY_PER_REQUEST   # On-demand; free tier covers small use
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  # ── Amplify Hosting ───────────────────────────────────────────────────────
+  # NOTE: Connect the GitHub repo to Amplify in the AWS Console.
+  # Set environment variable VITE_API_URL to the HttpApiUrl output below.
+
+Outputs:
+  HttpApiUrl:
+    Description: "API Gateway HTTP API endpoint URL"
+    Value: !Sub "https://${MurmurationApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+
+  FunctionArn:
+    Description: "Lambda function ARN"
+    Value: !GetAtt MurmurationFunction.Arn
+
+  HouseholdsTableName:
+    Description: "DynamoDB table name"
+    Value: !Ref HouseholdsTable
