@@ -58,7 +58,7 @@ export default function App() {
             >
               <Activity size={16} color="#FFFFFF" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[#FFFFFF] text-base tracking-tight">Murmuration</span>
+            <span className="font-bold text-[#FFFFFF] text-base tracking-tight">samayUrja</span>
           </div>
           <p className="text-xs text-[#A3A3A3] leading-tight pl-10">
             Many homes. One intelligent grid.
@@ -98,7 +98,7 @@ export default function App() {
             style={{ background: 'rgba(255,255,255,0.15)' }}>
             <Activity size={14} color="#FFFFFF" strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-[#FFFFFF] text-sm">Murmuration</span>
+          <span className="font-bold text-[#FFFFFF] text-sm">samayUrja</span>
         </div>
         <button
           onClick={() => setMobileNavOpen(!mobileNavOpen)}
